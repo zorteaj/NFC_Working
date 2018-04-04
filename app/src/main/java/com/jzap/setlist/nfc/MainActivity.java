@@ -35,6 +35,8 @@ import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.sql.BatchUpdateException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -111,9 +113,9 @@ public class MainActivity extends AppCompatActivity {
        mAccountNameTextView.setText(SaveSharedPreference.getUserName(this));
    }
 
-    private void displayUsers(List<User> users) {
+    private void displayUsers(HashMap<String, User> users) {
         mUsersRecyclerView = (RecyclerView) findViewById(R.id.usersRecyclerView);
-        UsersRecyclerViewAdptr adptr = new UsersRecyclerViewAdptr(users);
+        UsersRecyclerViewAdptr adptr = new UsersRecyclerViewAdptr(users, this);
         mUsersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mUsersRecyclerView.setAdapter(adptr);
         //adptr.notifyItemChanged(0);
@@ -129,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
 
         if(mNfcAdapter == null) {
             Toast.makeText(this, "No NFC support on this device", Toast.LENGTH_LONG).show();
-            finish();
+            //finish();
             return;
         }
 
@@ -161,18 +163,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getUsersFromDB() {
-        final List<User> users = new ArrayList<>();
+        final HashMap<String, User> users = new HashMap<>();
+        final HashSet<String> contactsSet = new HashSet<>();
         mUsersRef.addListenerForSingleValueEvent(new ValueEventListener() { // was addValueEventListener
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                //String data = dataSnapshot.getValue(String.class);
-                // Log.i(TAG, "Data change!");
                 for(DataSnapshot snap : dataSnapshot.getChildren()) {
-                    //Log.i(TAG, "Child...");
+                    DataSnapshot contactsDB = snap.child("contacts");
+                    for(DataSnapshot contact : contactsDB.getChildren()) {
+                        contactsSet.add(contact.getValue(String.class));
+                    }
                     try {
-                        User user = snap.getValue(User.class);
+                        User user = new User(snap.child("email").getValue(String.class),
+                                snap.child("firstName").getValue(String.class),
+                                snap.child("lastName").getValue(String.class),
+                                snap.child("website").getValue(String.class),
+                                snap.child("password").getValue(String.class),
+                                snap.child("phone").getValue(String.class),
+                                contactsSet );
+
                         if(user != null) {
-                            users.add(user);
+                            users.put(user.getEmail(), user);
                         }
                     } catch(DatabaseException e) {
                         Log.e(TAG, "Couldn't make a user out of this db value");

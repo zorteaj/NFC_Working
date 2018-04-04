@@ -21,6 +21,6 @@ public class ContactActivity extends AppCompatActivity {
         mContactName = (TextView) findViewById(R.id.contactTextView);
         Intent intent = getIntent();
 
-        mContactName.setText(intent.getStringExtra("CONTACT_NAME"));
+        mContactName.setText(intent.getStringExtra("CONTACT_EMAIL"));
     }
 }

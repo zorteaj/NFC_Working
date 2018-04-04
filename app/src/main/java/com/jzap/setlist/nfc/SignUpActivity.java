@@ -10,6 +10,10 @@ import android.widget.TextView;
 
 import org.w3c.dom.Text;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
 /**
  * Created by JZ_W541 on 4/3/2018.
  */
@@ -48,12 +52,14 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // TODO: Validate
+                HashSet<String> contacts = new HashSet<>(); // TODO: Put contacts in here?I
                 User user = new User(mEmailEditText.getText().toString(),
-                        defaultWebsite,
                         mFirstNameEditText.getText().toString(),
                         mLastNameEdtiText.getText().toString(),
+                        defaultWebsite,
                         mPasswordEditText.getText().toString(),
-                        mPhoneEditText.getText().toString()
+                        mPhoneEditText.getText().toString(),
+                        contacts
                 );
                 user.postToDB();
                 logIn(mEmailEditText.getText().toString());

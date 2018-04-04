@@ -4,13 +4,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+
+import static android.content.ContentValues.TAG;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -21,6 +27,7 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
     public class ViewHolder extends RecyclerView.ViewHolder {
         public TextView userFirstName;
         public TextView userLastName;
+        public TextView friendFlag;
         public CardView cardView;
 
         public ViewHolder(CardView cardView) {
@@ -28,13 +35,21 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
             this.cardView = cardView;
             userFirstName = (TextView) cardView.findViewById(R.id.userFirstName);
             userLastName = (TextView) cardView.findViewById(R.id.userLastName);
+            friendFlag = (TextView) cardView.findViewById(R.id.friendFlagTextView);
         }
     }
 
-    List<User> mUsers;
+    HashMap<String, User> mUsers;
+    List<User> mUsersList;
+    User mThisUser;
 
-    public UsersRecyclerViewAdptr(List<User> users) {
+    public UsersRecyclerViewAdptr(HashMap<String, User> users, Context context) {
         mUsers = users;
+        mUsersList = new ArrayList<User>(mUsers.values());
+        mThisUser = mUsers.get(SaveSharedPreference.getUserName(context));
+        if(mThisUser == null) {
+            Log.e(TAG, "Null user!"); // TODO: Throw exception?
+        }
     }
 
     @Override
@@ -47,13 +62,20 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
 
     @Override
     public void onBindViewHolder(UsersRecyclerViewAdptr.ViewHolder holder, final int position) {
-        holder.userFirstName.setText(mUsers.get(position).getFirstName());
-        holder.userLastName.setText(mUsers.get(position).getLastName());
+        holder.userFirstName.setText(mUsersList.get(position).getFirstName());
+        holder.userLastName.setText(mUsersList.get(position).getLastName());
+        if(mThisUser.getContacts().contains(mUsersList.get(position).getEmail())) {
+            holder.friendFlag.setText("Friend");
+        } else if(mThisUser.getEmail().equals(mUsersList.get(position).getEmail())) {
+            holder.friendFlag.setText("Me");
+        } else {
+            holder.friendFlag.setText("NOT a friend");
+        }
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent contactIntent = new Intent(view.getContext(), ContactActivity.class);
-                contactIntent.putExtra("CONTACT_NAME", mUsers.get(position).getFirstName());
+                contactIntent.putExtra("CONTACT_EMAIL", mUsersList.get(position).getEmail());
                 view.getContext().startActivity(contactIntent);
             }
         });
@@ -61,6 +83,6 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
 
     @Override
     public int getItemCount() {
-        return mUsers.size();
+        return mUsersList.size();
     }
 }

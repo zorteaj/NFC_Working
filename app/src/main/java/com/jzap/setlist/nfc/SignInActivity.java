@@ -22,7 +22,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -76,22 +79,32 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
 
+    // TODO: This is duplicated
     private void setUpDatabase() {
         mUsers = new HashMap<>();
+        final HashSet<String> contactsSet = new HashSet<>();
         mUsersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                //String data = dataSnapshot.getValue(String.class);
-                // Log.i(TAG, "Data change!");
                 for(DataSnapshot snap : dataSnapshot.getChildren()) {
-                    //Log.i(TAG, "Child...");
+                    DataSnapshot contactsDB = snap.child("contacts");
+                    for (DataSnapshot contact : contactsDB.getChildren()) {
+                        contactsSet.add(contact.getValue(String.class));
+                    }
                     try {
-                        User user = snap.getValue(User.class);
-                        if(user != null) {
+                        User user = new User(snap.child("email").getValue(String.class),
+                                snap.child("firstName").getValue(String.class),
+                                snap.child("lastName").getValue(String.class),
+                                snap.child("website").getValue(String.class),
+                                snap.child("password").getValue(String.class),
+                                snap.child("phone").getValue(String.class),
+                                contactsSet);
+
+                        if (user != null) {
                             mUsers.put(user.getEmail(), user);
                         }
-                    } catch(DatabaseException e) {
-                        Log.e(TAG, "Couldn't make a user out of this db value");
+                    } catch (DatabaseException e) {
+                        Log.e(TAG, "Couldn't make a user out of THIS db value");
                         Log.e(TAG, e.toString());
                     }
                 }
@@ -208,6 +221,7 @@ public class SignInActivity extends AppCompatActivity {
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            HashSet<String> contacts = new HashSet<>(); // TODO: Fill in any contacts?
             // New user
             if(!mUsers.containsKey(account.getEmail())) {
                 User user = new User(account.getEmail(),
@@ -215,7 +229,8 @@ public class SignInActivity extends AppCompatActivity {
                         account.getFamilyName(),
                         "defaultWebsite",
                         "no pw",
-                        "no phone"
+                        "no phone",
+                        contacts
                 );
                 user.postToDB();
             }

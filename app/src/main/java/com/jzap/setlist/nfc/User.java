@@ -20,16 +20,17 @@ public class User {
     private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
     private DatabaseReference mUsersRef = mRootRef.child("users");
 
-    private String email, firstName, lastName, website, password, phone;
+    private String email, firstName, lastName, website, password, phone, token;
     private HashSet<String> contacts;
 
-    public User(String email, String firstName, String lastName, String website, String password, String phone, HashSet<String> contacts) {
+    public User(String email, String firstName, String lastName, String website, String password, String phone, String token, HashSet<String> contacts) {
         this.email = email;
         this.website = website;
         this.firstName = firstName;
         this.lastName = lastName;
         this.password = password;
         this.phone = phone;
+        this.token = token;
         this.contacts = contacts;
     }
 
@@ -38,7 +39,16 @@ public class User {
     }
 
     public void postToDB() {
-        mUsersRef.push().setValue(this);
+        DatabaseReference user = mUsersRef.push();
+        user.child("email").setValue(email);
+        user.child("website").setValue(website);
+        user.child("firstName").setValue(firstName);
+        user.child("lastName").setValue(lastName);
+        user.child("password").setValue(password);
+        user.child("phone").setValue(phone);
+        user.child("token").setValue(token);
+        DatabaseReference contacts = user.child("contacts");
+        contacts.child("exampleContact").setValue("mark@mark.com");
     }
 
     public String getEmail() {
@@ -58,6 +68,8 @@ public class User {
     public String getPhone() { return phone; }
 
     public HashSet<String> getContacts() { return contacts; }
+
+    public String getToken() { return token; }
 
     public void addContact(String email) {
         contacts.add(email);

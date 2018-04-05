@@ -1,8 +1,10 @@
 package com.jzap.setlist.nfc;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,6 +23,8 @@ import java.util.List;
 
 
 public class SignUpActivity extends AppCompatActivity {
+
+    private final static String TAG = "JAZ_NFC";
 
     private Button mSignUpButton;
     private EditText mFirstNameEditText;
@@ -47,18 +51,21 @@ public class SignUpActivity extends AppCompatActivity {
         mSignUpButton = (Button) findViewById(R.id.signUpButton);
 
         final String defaultWebsite = "defaultWebsite";
+        final Context context = this;
 
         mSignUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // TODO: Validate
-                HashSet<String> contacts = new HashSet<>(); // TODO: Put contacts in here?I
+                HashSet<String> contacts = new HashSet<>(); // TODO: Put contacts in here?
+                String token = SaveSharedPreference.getToken(context);
                 User user = new User(mEmailEditText.getText().toString(),
                         mFirstNameEditText.getText().toString(),
                         mLastNameEdtiText.getText().toString(),
                         defaultWebsite,
                         mPasswordEditText.getText().toString(),
                         mPhoneEditText.getText().toString(),
+                        token,
                         contacts
                 );
                 user.postToDB();

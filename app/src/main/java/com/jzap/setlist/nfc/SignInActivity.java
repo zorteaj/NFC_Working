@@ -1,5 +1,6 @@
 package com.jzap.setlist.nfc;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -67,6 +68,8 @@ public class SignInActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
+        Log.i(TAG, "Starting App...");
+
         if(isSignedIn()) {
             Log.i(TAG, "Already signed in");
             startMainActivity();
@@ -83,6 +86,7 @@ public class SignInActivity extends AppCompatActivity {
     private void setUpDatabase() {
         mUsers = new HashMap<>();
         final HashSet<String> contactsSet = new HashSet<>();
+        final Context context = this;
         mUsersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -92,12 +96,14 @@ public class SignInActivity extends AppCompatActivity {
                         contactsSet.add(contact.getValue(String.class));
                     }
                     try {
+                        String token = SaveSharedPreference.getToken(context);
                         User user = new User(snap.child("email").getValue(String.class),
                                 snap.child("firstName").getValue(String.class),
                                 snap.child("lastName").getValue(String.class),
                                 snap.child("website").getValue(String.class),
                                 snap.child("password").getValue(String.class),
                                 snap.child("phone").getValue(String.class),
+                                token,
                                 contactsSet);
 
                         if (user != null) {
@@ -223,6 +229,7 @@ public class SignInActivity extends AppCompatActivity {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
             HashSet<String> contacts = new HashSet<>(); // TODO: Fill in any contacts?
             // New user
+            String token = SaveSharedPreference.getToken(this);
             if(!mUsers.containsKey(account.getEmail())) {
                 User user = new User(account.getEmail(),
                         account.getGivenName(),
@@ -230,6 +237,7 @@ public class SignInActivity extends AppCompatActivity {
                         "defaultWebsite",
                         "no pw",
                         "no phone",
+                        token,
                         contacts
                 );
                 user.postToDB();

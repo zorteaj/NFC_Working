@@ -43,8 +43,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "JAZ_NFC";
 
-    private NfcAdapter mNfcAdapter;
-
     private GoogleSignInClient mGoogleSignInClient;
 
     private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
@@ -61,7 +59,6 @@ public class MainActivity extends AppCompatActivity {
 
         getUsersFromDB();
         setUpUserAccount();
-        setUpNFC();
         setUpGoogleSignOut();
         setUpLogOut();
         debugPrintToken();
@@ -79,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
         mLogOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // TODO: Reassign the token?
                 SaveSharedPreference.clearUserName(context);
                 startSignInActivity();
 
@@ -126,42 +124,6 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Token = " + refreshedToken);
     }
 
-    private void setUpNFC() {
-        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
-
-        if(mNfcAdapter == null) {
-            Toast.makeText(this, "No NFC support on this device", Toast.LENGTH_LONG).show();
-            //finish();
-            return;
-        }
-
-        if(mNfcAdapter.isEnabled()) {
-            Toast.makeText(this, "NFC Adapter is enabled", Toast.LENGTH_LONG).show();
-        } else {
-            Toast.makeText(this, "NFC Adapter is NOT enabled", Toast.LENGTH_LONG).show();
-        }
-
-        Intent intent = getIntent();
-        if(intent != null && intent.getAction() == NfcAdapter.ACTION_NDEF_DISCOVERED) {
-            Log.i(TAG, "Got NDEF");
-            processTag(intent);
-        } else {
-            Log.i(TAG, "Did NOT get NDEF");
-        }
-    }
-
-    private void setUpButton() {
-       /* mUserId = (TextView) findViewById(R.id.userId);
-
-        mButton = (Button) findViewById(R.id.button);
-        mButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //mTestRef.setValue("New Value");
-            }
-        });*/
-    }
-
     private void getUsersFromDB() {
         final HashMap<String, User> users = new HashMap<>();
         final HashSet<String> contactsSet = new HashSet<>();
@@ -180,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
                                 snap.child("website").getValue(String.class),
                                 snap.child("password").getValue(String.class),
                                 snap.child("phone").getValue(String.class),
+                                snap.child("token").getValue(String.class),
                                 contactsSet );
 
                         if(user != null) {
@@ -198,25 +161,5 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-    }
-
-    private void processTag(Intent intent) {
-        Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
-        if(rawMsgs != null) {
-            Log.i(TAG, "There are " + rawMsgs.length + " messages in this tag");
-            NdefMessage[] msgs = new NdefMessage[rawMsgs.length];
-            for(int i = 0; i < rawMsgs.length; i++) {
-                msgs[i] = (NdefMessage) rawMsgs[i];
-                NdefRecord[] records = msgs[i].getRecords();
-                Log.i(TAG, "There are " + records.length + " records in this message");
-                for(int j = 0; j < records.length; j++) {
-                    String payload = new String(records[j].getPayload());
-                    Log.i(TAG, payload);
-                    //mUserId.setText(payload);
-                }
-            }
-        } else {
-            Log.i(TAG, "Problem reading tag");
-        }
     }
 }

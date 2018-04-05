@@ -2,15 +2,27 @@ package com.jzap.setlist.nfc;
 
 import android.util.Log;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseException;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
+
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Created by JZ_W541 on 3/29/2018.
  */
 
 public class FirebaseIDService extends FirebaseInstanceIdService {
-    private static final String TAG = "FirebaseIDService";
+    private static final String TAG = "JAZ_NFC";
+
+    private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
+    private DatabaseReference mUsersRef = mRootRef.child("users");
 
     @Override
     public void onTokenRefresh() {
@@ -31,6 +43,31 @@ public class FirebaseIDService extends FirebaseInstanceIdService {
      * @param token The new token.
      */
     private void sendRegistrationToServer(String token) {
+        // If a user is already signed in, update their token
+        String userEmail = SaveSharedPreference.getUserName(this);
+        if(userEmail.length() != 0) {
+            writeTokenToDB(userEmail, token);
+        }
+        SaveSharedPreference.setToken(this, token);
         // Add custom implementation, as needed.
+    }
+
+    private void writeTokenToDB(final String userEmail, final String token) {
+        final HashSet<String> contactsSet = new HashSet<>();
+        mUsersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot snap : dataSnapshot.getChildren()) {
+                    if(snap.child("email").getValue().equals(userEmail)) {
+                        snap.getRef().child("token").setValue(token);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 }

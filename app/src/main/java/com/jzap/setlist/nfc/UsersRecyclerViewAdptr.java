@@ -2,6 +2,7 @@ package com.jzap.setlist.nfc;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -66,10 +67,13 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
         holder.userLastName.setText(mUsersList.get(position).getLastName());
         if(mThisUser.getContacts().contains(mUsersList.get(position).getEmail())) {
             holder.friendFlag.setText("Friend");
+            holder.friendFlag.setTextColor(Color.BLUE);
         } else if(mThisUser.getEmail().equals(mUsersList.get(position).getEmail())) {
             holder.friendFlag.setText("Me");
+            holder.friendFlag.setTextColor(Color.BLUE);
         } else {
             holder.friendFlag.setText("NOT a friend");
+            holder.friendFlag.setTextColor(Color.GRAY);
         }
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override

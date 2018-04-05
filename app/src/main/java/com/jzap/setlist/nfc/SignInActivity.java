@@ -26,7 +26,9 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -49,7 +51,9 @@ public class SignInActivity extends AppCompatActivity {
     private EditText mSignInEmailEditText;
     private EditText mSignInPasswordEditText;
 
-    private HashMap<String, User> mUsers;
+    private HashMap<Integer, User> mUsers;
+
+    private boolean mDBReady = false;
 
     // TODO: Validate
     private class SignIn {
@@ -61,7 +65,6 @@ public class SignInActivity extends AppCompatActivity {
             this.password = password;
         }
     }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,49 +79,19 @@ public class SignInActivity extends AppCompatActivity {
         } else {
             Log.i(TAG, "NOT yet signed in");
             setUpDatabase();
-            setUpGoogleSignIn();
-            setUpManualSignIn();
             setUpManualSignUp();
         }
     }
 
-    // TODO: This is duplicated
     private void setUpDatabase() {
-        mUsers = new HashMap<>();
-        final HashSet<String> contactsSet = new HashSet<>();
-        final Context context = this;
-        mUsersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        // TODO: It's a bit clunky to wait for the db to be ready to do much of anything else, but it's the safe quicky way for now
+        FirebaseDBAdptr.register(new FirebaseDBUsersCallback() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for(DataSnapshot snap : dataSnapshot.getChildren()) {
-                    DataSnapshot contactsDB = snap.child("contacts");
-                    for (DataSnapshot contact : contactsDB.getChildren()) {
-                        contactsSet.add(contact.getValue(String.class));
-                    }
-                    try {
-                        String token = SaveSharedPreference.getToken(context);
-                        User user = new User(snap.child("email").getValue(String.class),
-                                snap.child("firstName").getValue(String.class),
-                                snap.child("lastName").getValue(String.class),
-                                snap.child("website").getValue(String.class),
-                                snap.child("password").getValue(String.class),
-                                snap.child("phone").getValue(String.class),
-                                token,
-                                contactsSet);
-
-                        if (user != null) {
-                            mUsers.put(user.getEmail(), user);
-                        }
-                    } catch (DatabaseException e) {
-                        Log.e(TAG, "Couldn't make a user out of THIS db value");
-                        Log.e(TAG, e.toString());
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
+            public void call(int what, Object obj) {
+                super.call(what, obj);
+                mUsers = users;
+                setUpManualSignIn();
+                setUpGoogleSignIn();
             }
         });
     }
@@ -133,7 +106,6 @@ public class SignInActivity extends AppCompatActivity {
         mSignInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO: Get, validate, and store email and password
                 mSignInEmailEditText = (EditText) findViewById(R.id.signInEmail) ;
                 mSignInPasswordEditText = (EditText) findViewById(R.id.signInPassword);
                 SignIn signIn = new SignIn(mSignInEmailEditText.getText().toString(), mSignInPasswordEditText.getText().toString());
@@ -162,10 +134,6 @@ public class SignInActivity extends AppCompatActivity {
     }
 
     private boolean validateSignIn(SignIn signIn) {
-        if(mUsers == null) { // TODO: We need to wait for the database callback to occur - this is a design issue
-            Log.i(TAG, "Users is null");
-            return false;
-        }
         if(mUsers.containsKey(signIn.email) && (mUsers.get(signIn.email).getPassword()).equals(signIn.password)) {
             Log.i(TAG, "Good!");
             return true;
@@ -175,11 +143,6 @@ public class SignInActivity extends AppCompatActivity {
     }
 
     private boolean isSignedIn() {
-       /* mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-        if(mGoogleSignInAccount != null) {
-            return true;
-        }
-        return false;*/
        if(SaveSharedPreference.getUserName(this).length() == 0) {
            return false;
        }

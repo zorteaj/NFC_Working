@@ -2,6 +2,7 @@ package com.jzap.setlist.nfc;
 
 import android.util.Log;
 
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -21,7 +22,7 @@ public class User {
     private DatabaseReference mUsersRef = mRootRef.child("users");
 
     private String email, firstName, lastName, website, password, phone, token;
-    private HashSet<String> contacts;
+    private HashSet<String> contacts = new HashSet<>();
 
     public User(String email, String firstName, String lastName, String website, String password, String phone, String token, HashSet<String> contacts) {
         this.email = email;
@@ -34,9 +35,31 @@ public class User {
         this.contacts = contacts;
     }
 
-    public User() {
-        this.contacts = new HashSet<>();
+    private User(String email, String firstName, String lastName, String website, String password, String phone, String token, DataSnapshot userDBSnapshot) {
+        DataSnapshot contactsDB = userDBSnapshot.child("contacts");
+        for (DataSnapshot contact : contactsDB.getChildren()) {
+            contacts.add(contact.getValue(String.class));
+        }
+        this.email = email;
+        this.website = website;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.password = password;
+        this.phone = phone;
+        this.token = token;
     }
+
+    public User(DataSnapshot userDBSnapshot) {
+        this( userDBSnapshot.child("email").getValue(String.class),
+                userDBSnapshot.child("firstName").getValue(String.class),
+                userDBSnapshot.child("lastName").getValue(String.class),
+                userDBSnapshot.child("website").getValue(String.class),
+                userDBSnapshot.child("password").getValue(String.class),
+                userDBSnapshot.child("phone").getValue(String.class),
+                userDBSnapshot.child("token").getValue(String.class),
+                userDBSnapshot );
+    }
+
 
     public void postToDB() {
         DatabaseReference user = mUsersRef.push();

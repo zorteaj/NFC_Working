@@ -40,14 +40,19 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
         }
     }
 
+    private static final String TAG = Config.TAG_HEADER + "UsrRcyclrVApr";
+
     HashMap<String, User> mUsers;
     List<User> mUsersList;
     User mThisUser;
 
     public UsersRecyclerViewAdptr(HashMap<String, User> users, Context context) {
         mUsers = users;
-        mUsersList = new ArrayList<User>(mUsers.values());
+        String user = SaveSharedPreference.getUserName(context);
+        Log.i(TAG, "user = " + user);
+        Log.i(TAG, "Number of users = " + mUsers.size());
         mThisUser = mUsers.get(SaveSharedPreference.getUserName(context));
+        mUsersList = new ArrayList<>(mUsers.values());
         if(mThisUser == null) {
             Log.e(TAG, "Null user!"); // TODO: Throw exception?
         }

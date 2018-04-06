@@ -7,9 +7,9 @@ import java.util.HashMap;
  */
 
 public class FirebaseDBUsersCallback implements Callback {
-    HashMap<Integer, User> users;
+    HashMap<String, User> users;
     @Override
     public void call(int what, Object obj) {
-        users = (HashMap<Integer, User>) obj;
+        users = (HashMap<String, User>) obj;
     }
 }

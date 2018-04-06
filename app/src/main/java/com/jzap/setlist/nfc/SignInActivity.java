@@ -1,6 +1,5 @@
 package com.jzap.setlist.nfc;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -16,19 +15,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -42,8 +33,8 @@ public class SignInActivity extends AppCompatActivity {
 
     private GoogleSignInClient mGoogleSignInClient;
 
-    private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
-    private DatabaseReference mUsersRef = mRootRef.child("users");
+   // private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
+  //  private DatabaseReference mUsersRef = mRootRef.child("users");
 
     private SignInButton mGoogleSignInButton;
     private Button mSignInButton;
@@ -51,11 +42,10 @@ public class SignInActivity extends AppCompatActivity {
     private EditText mSignInEmailEditText;
     private EditText mSignInPasswordEditText;
 
-    private HashMap<Integer, User> mUsers;
-
-    private boolean mDBReady = false;
+    private HashMap<String, User> mUsers;
 
     // TODO: Validate
+    // TODO: What the heck is this? Get rid of it, probably
     private class SignIn {
         public String email;
         public String password;
@@ -110,7 +100,7 @@ public class SignInActivity extends AppCompatActivity {
                 mSignInPasswordEditText = (EditText) findViewById(R.id.signInPassword);
                 SignIn signIn = new SignIn(mSignInEmailEditText.getText().toString(), mSignInPasswordEditText.getText().toString());
                 if(validateSignIn(signIn)) {
-                    logIn(mSignInEmailEditText.getText().toString());
+                    logIn(User.cleanEmail(mSignInEmailEditText.getText().toString()));
                 } else {
                     // TODO: Give invalid sign in feedback
                 }
@@ -134,7 +124,7 @@ public class SignInActivity extends AppCompatActivity {
     }
 
     private boolean validateSignIn(SignIn signIn) {
-        if(mUsers.containsKey(signIn.email) && (mUsers.get(signIn.email).getPassword()).equals(signIn.password)) {
+        if(mUsers.containsKey(User.cleanEmail(signIn.email)) && (mUsers.get(User.cleanEmail(signIn.email)).getPassword()).equals(signIn.password)) {
             Log.i(TAG, "Good!");
             return true;
         }
@@ -205,7 +195,7 @@ public class SignInActivity extends AppCompatActivity {
                 );
                 user.postToDB();
             }
-            logIn(account.getEmail());
+            logIn(User.cleanEmail(account.getEmail()));
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.

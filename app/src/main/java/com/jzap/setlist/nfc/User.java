@@ -21,7 +21,7 @@ public class User {
     private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
     private DatabaseReference mUsersRef = mRootRef.child("users");
 
-    private String email, firstName, lastName, website, password, phone, token;
+    private String email, firstName, lastName, website, password, phone, token, cleanEmail;
     private HashSet<String> contacts = new HashSet<>();
 
     public User(String email, String firstName, String lastName, String website, String password, String phone, String token, HashSet<String> contacts) {
@@ -33,6 +33,7 @@ public class User {
         this.phone = phone;
         this.token = token;
         this.contacts = contacts;
+        this.cleanEmail = cleanEmail(email);
     }
 
     private User(String email, String firstName, String lastName, String website, String password, String phone, String token, DataSnapshot userDBSnapshot) {
@@ -47,6 +48,7 @@ public class User {
         this.password = password;
         this.phone = phone;
         this.token = token;
+        this.cleanEmail = cleanEmail(email);
     }
 
     public User(DataSnapshot userDBSnapshot) {
@@ -62,7 +64,7 @@ public class User {
 
 
     public void postToDB() {
-        DatabaseReference user = mUsersRef.push();
+        DatabaseReference user = mUsersRef.child(cleanEmail);
         user.child("email").setValue(email);
         user.child("website").setValue(website);
         user.child("firstName").setValue(firstName);
@@ -70,8 +72,11 @@ public class User {
         user.child("password").setValue(password);
         user.child("phone").setValue(phone);
         user.child("token").setValue(token);
-        DatabaseReference contacts = user.child("contacts");
-        contacts.child("exampleContact").setValue("mark@mark.com");
+        // TODO: Do I ever need to push the contacts list?
+    }
+
+    public static String cleanEmail(String email) {
+        return email.replace(".", ",");
     }
 
     public String getEmail() {
@@ -93,6 +98,8 @@ public class User {
     public HashSet<String> getContacts() { return contacts; }
 
     public String getToken() { return token; }
+
+    public String getCleanEmail() { return cleanEmail; }
 
     public void addContact(String email) {
         contacts.add(email);

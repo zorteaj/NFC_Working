@@ -44,21 +44,27 @@ public class FirebaseIDService extends FirebaseInstanceIdService {
      */
     private void sendRegistrationToServer(String token) {
         // If a user is already signed in, update their token
-        String userEmail = SaveSharedPreference.getUserName(this);
-        if(userEmail.length() != 0) {
-            writeTokenToDB(userEmail, token);
+        String userName = SaveSharedPreference.getUserName(this);
+        if(userName.length() != 0) {
+            writeTokenToDB(userName, token);
         }
         SaveSharedPreference.setToken(this, token);
-        // Add custom implementation, as needed.
     }
 
-    private void writeTokenToDB(final String userEmail, final String token) {
-        final HashSet<String> contactsSet = new HashSet<>();
+    private void writeTokenToDB(final String userName, final String token) {
+
+       mUsersRef.child(userName).child(token).setValue(token);
+
+
+       /* final HashSet<String> contactsSet = new HashSet<>();
+
+
+
         mUsersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot snap : dataSnapshot.getChildren()) {
-                    if(snap.child("email").getValue().equals(userEmail)) {
+                    if(snap.child("email").getValue().equals(userName)) {
                         snap.getRef().child("token").setValue(token);
                     }
                 }
@@ -68,6 +74,6 @@ public class FirebaseIDService extends FirebaseInstanceIdService {
             public void onCancelled(DatabaseError databaseError) {
 
             }
-        });
+        });*/
     }
 }

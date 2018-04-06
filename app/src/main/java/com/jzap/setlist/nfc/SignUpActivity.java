@@ -43,7 +43,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     private void setUpSignUp() {
         mFirstNameEditText = (EditText) findViewById(R.id.firstNameEditText);
-        mLastNameEdtiText = (EditText) findViewById(R.id.firstNameEditText);
+        mLastNameEdtiText = (EditText) findViewById(R.id.lastNameEditText);
         mPhoneEditText = (EditText) findViewById(R.id.phoneEditText);
         mEmailEditText = (EditText) findViewById(R.id.emailEditText);
         mPasswordEditText = (EditText) findViewById(R.id.passwordEditText);
@@ -69,7 +69,7 @@ public class SignUpActivity extends AppCompatActivity {
                         contacts
                 );
                 user.postToDB();
-                logIn(mEmailEditText.getText().toString());
+                logIn(User.cleanEmail(mEmailEditText.getText().toString()));
             }
         });
     }

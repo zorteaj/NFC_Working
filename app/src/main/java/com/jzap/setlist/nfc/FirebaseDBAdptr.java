@@ -26,7 +26,7 @@ public class FirebaseDBAdptr {
     private static DatabaseReference rootDBRef = FirebaseDatabase.getInstance().getReference();
     private static DatabaseReference usersDBRef = rootDBRef.child("users");
 
-    private static HashMap<Integer, User> users = new HashMap<>();
+    private static HashMap<String, User> users = new HashMap<>();
     private static boolean init = false;
 
     private static List<FirebaseDBUsersCallback> usersCallbacks = new ArrayList<>();
@@ -39,18 +39,26 @@ public class FirebaseDBAdptr {
         usersCallbacks.add(callback);
     }
 
+    public static HashMap<String, User> getUsers() {
+        return users;
+    }
+
     private static void init() {
-        // TODO: I'm clearing the entire set of users and replcaing them.  There's probably a better way.
-        users = new HashMap<>();
         // TODO: Consider using child event listener
         usersDBRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                // TODO: I'm clearing the entire set of users and replacing them.  There's probably a better way.
+                users = new HashMap<>();
+                int count = 0;
                 for(DataSnapshot userDBSnapShot : dataSnapshot.getChildren()) {
+                    count++;
                     try {
                         User user = new User(userDBSnapShot);
                         if (user != null) {
-                            users.put(user.getEmail().hashCode(), user);
+                            users.put(user.getCleanEmail(), user);
+                        } else {
+                            Log.w(TAG, "Got null after trying to construct new user");
                         }
                     } catch (DatabaseException e) {
                         Log.e(TAG, "Couldn't make a user out of this db value");

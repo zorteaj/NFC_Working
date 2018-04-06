@@ -50,14 +50,13 @@ public class ContactActivity extends AppCompatActivity {
     private DatabaseReference mUsersRef = mRootRef.child("users");
     private DatabaseReference mRequestsRef = mRootRef.child("requests");
 
-    DatabaseReference mThisContactRef;
     DatabaseReference mThisUserRef;
 
     private HashMap<String, User> mUsers;
 
-    private User mThisUser;
+    private User mActiveUser;
     private User mThisContact;
-    private String mThisContactEmail;
+    private String mThisContactKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,11 +71,11 @@ public class ContactActivity extends AppCompatActivity {
         Intent intent = getIntent();
 
         if(intent.getAction() == "CONTACT_REQUEST") {
-            mThisContactEmail = intent.getStringExtra("REQUESTOR");
+            mThisContactKey = User.cleanEmail(intent.getStringExtra("REQUESTOR"));
         } else if (intent.getAction() == NfcAdapter.ACTION_NDEF_DISCOVERED) {
             processTag(intent);
         } else {
-            mThisContactEmail = intent.getStringExtra("CONTACT_EMAIL");
+            mThisContactKey = intent.getStringExtra("CONTACT_KEY");
         }
 
         setUpDatabase();
@@ -103,13 +102,12 @@ public class ContactActivity extends AppCompatActivity {
     }
 
     private void makeRequest() {
-        DatabaseReference contactRequests = mThisContactRef.child("contactRequests");
-        DatabaseReference contactRequest = contactRequests.push();
-        contactRequest.setValue(mThisUser.getEmail());
+        mUsersRef.child(mThisContactKey).child("contactRequests").child(mActiveUser.getCleanEmail()).setValue(mActiveUser.getCleanEmail());
 
         DatabaseReference requestRef = mRequestsRef.push();
         requestRef.child("token").setValue(mThisContact.getToken());
-        requestRef.child("requestor").setValue(mThisUser.getEmail());
+        // TODO: This should probably use the key like everything else, if for nothing but consistency
+        requestRef.child("requestor").setValue(mActiveUser.getEmail());
         requestRef.child("outstanding").setValue("true");
     }
 
@@ -118,12 +116,9 @@ public class ContactActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // Add to contacts list
-                DatabaseReference contacts = mThisContactRef.child("contacts");
-                DatabaseReference contact = contacts.push();
-                contact.setValue(mThisUser.getEmail());
-
+                mUsersRef.child(mThisContactKey).child("contacts").child(mActiveUser.getCleanEmail()).setValue(mActiveUser.getCleanEmail());
                 // Delete the contact request
-               // DatabaseReference contactRequests = mThisUserRef.child("contactRequests");
+                mUsersRef.child(mActiveUser.getCleanEmail()).child("contactRequests").child(mThisContactKey).removeValue();
             }
         });
     }
@@ -133,7 +128,7 @@ public class ContactActivity extends AppCompatActivity {
         mContactName = (TextView) findViewById(R.id.userNameTextView);
         mContactName.setText(mThisContact.getFirstName() + " " + mThisContact.getLastName());
 
-        if(mThisUser.getContacts().contains(mThisContactEmail) || mThisUser.getEmail().equals(mThisContactEmail)) {
+        if(mActiveUser.getContacts().contains(mThisContact.getCleanEmail()) || mActiveUser.getCleanEmail().equals(mThisContactKey)) {
             displayContact();
         } else {
             displayStranger();
@@ -143,14 +138,15 @@ public class ContactActivity extends AppCompatActivity {
 
     }
 
+    // TODO: Should this be part of the DB Adptr?
     private void setUpContactRequest() {
-        mThisUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        mUsersRef.child(mActiveUser.getCleanEmail()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 DataSnapshot contactRequests = dataSnapshot.child("contactRequests");
                 for(DataSnapshot contact : contactRequests.getChildren()) {
                     // If this contact is in this user's contact requests
-                    if(contact.getValue().equals(mThisContact.getEmail())) {
+                    if(contact.getKey().equals(mThisContact.getCleanEmail())) {
                         mAcceptRequestButton.setVisibility(View.VISIBLE);
                     }
                 }
@@ -180,62 +176,35 @@ public class ContactActivity extends AppCompatActivity {
     }
 
     // TODO: This is duplicated
-    private void setUpThisUser() {
-        mThisUser = mUsers.get(SaveSharedPreference.getUserName(this));
-        if(mThisUser == null) {
-            Log.e(TAG, "Null user!"); // TODO: Throw exception?
+    private void setUpThisUser(HashMap<String, User> users) {
+        mActiveUser = ActiveUser.getActiveUser(this, users);
+    }
+
+    private void setUpThisContact(HashMap<String, User> users) {
+        mThisContact = users.get(mThisContactKey);
+    }
+
+    private void refresh(HashMap<String, User> users) {
+        mUsers = users;
+        setUpThisUser(users);
+        setUpThisContact(users);
+        display();
+        mDBReady = true;
+        if (mRequestOutstanding) {
+            makeRequest();
         }
     }
 
-    // TODO: This is duplicated
     private void setUpDatabase() {
-        final Context context = this;
-        mUsers = new HashMap<>();
-        final HashSet<String> contactsSet = new HashSet<>();
-        mUsersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        HashMap<String, User> users = FirebaseDBAdptr.getUsers();
+        if(users.size() != 0) {
+            refresh(users);
+        }
+        FirebaseDBAdptr.register(new FirebaseDBUsersCallback() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for(DataSnapshot snap : dataSnapshot.getChildren()) {
-                    DataSnapshot contactsDB = snap.child("contacts");
-                    for (DataSnapshot contact : contactsDB.getChildren()) {
-                        contactsSet.add(contact.getValue(String.class));
-                    }
-                    try {
-                        User user = new User(snap.child("email").getValue(String.class),
-                                snap.child("firstName").getValue(String.class),
-                                snap.child("lastName").getValue(String.class),
-                                snap.child("website").getValue(String.class),
-                                snap.child("password").getValue(String.class),
-                                snap.child("phone").getValue(String.class),
-                                snap.child("token").getValue(String.class),
-                                contactsSet);
-
-                        if (user != null) {
-                            mUsers.put(user.getEmail(), user);
-                            if(user.getEmail().equals(mThisContactEmail)) {
-                                mThisContact = user;
-                                mThisContactRef = snap.getRef();
-                            }
-                            if(user.getEmail().equals(SaveSharedPreference.getUserName(context))) { // TODO: Things are getting a little messy here, especially with setUpThisUser(), as it relates to this
-                                mThisUserRef = snap.getRef();
-                            }
-                        }
-                    } catch (DatabaseException e) {
-                        Log.e(TAG, "Couldn't make a user out of THIS db value");
-                        Log.e(TAG, e.toString());
-                    }
-                }
-                setUpThisUser();
-                display();
-                mDBReady = true;
-                if (mRequestOutstanding) {
-                    makeRequest();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
+            public void call(int what, Object obj) {
+                super.call(what, obj);
+                refresh(users);
             }
         });
     }
@@ -269,7 +238,7 @@ public class ContactActivity extends AppCompatActivity {
                 for(int j = 0; j < records.length; j++) {
                     String payload = new String(records[j].getPayload());
                     Log.i(TAG, payload);
-                    mThisContactEmail = payload;
+                    mThisContactKey = User.cleanEmail(payload);
                     if(mDBReady) {
                         makeRequest();
                     } else {

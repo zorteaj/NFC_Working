@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // TODO: Reassign the token?
-                SaveSharedPreference.clearUserName(context);
+                ActiveUser.clearUserKey(context);
                 startSignInActivity();
 
                 mGoogleSignInClient.signOut().addOnCompleteListener(activity, new OnCompleteListener<Void>() {
@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setUpUserAccount() {
        mAccountNameTextView = (TextView) findViewById(R.id.allUsersTextView); // TODO: hack
-       mAccountNameTextView.setText(SaveSharedPreference.getUserName(this));
+       mAccountNameTextView.setText(ActiveUser.getUserKey(this));
    }
 
     private void displayUsers(HashMap<String, User> users) {

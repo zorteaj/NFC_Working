@@ -2,17 +2,10 @@ package com.jzap.setlist.nfc;
 
 import android.util.Log;
 
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
-
-import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * Created by JZ_W541 on 3/29/2018.
@@ -44,11 +37,11 @@ public class FirebaseIDService extends FirebaseInstanceIdService {
      */
     private void sendRegistrationToServer(String token) {
         // If a user is already signed in, update their token
-        String userName = SaveSharedPreference.getUserName(this);
+        String userName = ActiveUser.getUserKey(this);
         if(userName.length() != 0) {
             writeTokenToDB(userName, token);
         }
-        SaveSharedPreference.setToken(this, token);
+        ActiveUser.setToken(this, token);
     }
 
     private void writeTokenToDB(final String userName, final String token) {

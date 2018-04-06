@@ -9,15 +9,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 
-import static android.content.ContentValues.TAG;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -44,18 +41,13 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
 
     HashMap<String, User> mUsers;
     List<User> mUsersList;
-    User mThisUser;
+    User mActiveUser;
 
     public UsersRecyclerViewAdptr(HashMap<String, User> users, Context context) {
         mUsers = users;
-        String user = SaveSharedPreference.getUserName(context);
-        Log.i(TAG, "user = " + user);
-        Log.i(TAG, "Number of users = " + mUsers.size());
-        mThisUser = mUsers.get(SaveSharedPreference.getUserName(context));
+        String user = ActiveUser.getUserKey(context);
+        mActiveUser = ActiveUser.getActiveUser(context, mUsers);
         mUsersList = new ArrayList<>(mUsers.values());
-        if(mThisUser == null) {
-            Log.e(TAG, "Null user!"); // TODO: Throw exception?
-        }
     }
 
     @Override
@@ -70,10 +62,10 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
     public void onBindViewHolder(UsersRecyclerViewAdptr.ViewHolder holder, final int position) {
         holder.userFirstName.setText(mUsersList.get(position).getFirstName());
         holder.userLastName.setText(mUsersList.get(position).getLastName());
-        if(mThisUser.getContacts().contains(mUsersList.get(position).getEmail())) {
+        if(mActiveUser.getContacts().contains(mUsersList.get(position).getCleanEmail())) {
             holder.friendFlag.setText("Friend");
             holder.friendFlag.setTextColor(Color.BLUE);
-        } else if(mThisUser.getEmail().equals(mUsersList.get(position).getEmail())) {
+        } else if(mActiveUser.getCleanEmail().equals(mUsersList.get(position).getCleanEmail())) {
             holder.friendFlag.setText("Me");
             holder.friendFlag.setTextColor(Color.BLUE);
         } else {
@@ -84,7 +76,7 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
             @Override
             public void onClick(View view) {
                 Intent contactIntent = new Intent(view.getContext(), ContactActivity.class);
-                contactIntent.putExtra("CONTACT_EMAIL", mUsersList.get(position).getEmail());
+                contactIntent.putExtra("CONTACT_KEY", mUsersList.get(position).getCleanEmail());
                 view.getContext().startActivity(contactIntent);
             }
         });

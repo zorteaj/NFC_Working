@@ -15,8 +15,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -133,7 +131,7 @@ public class SignInActivity extends AppCompatActivity {
     }
 
     private boolean isSignedIn() {
-       if(SaveSharedPreference.getUserName(this).length() == 0) {
+       if(ActiveUser.getUserKey(this).length() == 0) {
            return false;
        }
        return true;
@@ -182,7 +180,7 @@ public class SignInActivity extends AppCompatActivity {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
             HashSet<String> contacts = new HashSet<>(); // TODO: Fill in any contacts?
             // New user
-            String token = SaveSharedPreference.getToken(this);
+            String token = ActiveUser.getToken(this);
             if(!mUsers.containsKey(account.getEmail())) {
                 User user = new User(account.getEmail(),
                         account.getGivenName(),
@@ -205,7 +203,7 @@ public class SignInActivity extends AppCompatActivity {
 
     private void logIn(String userName) {
         Log.i(TAG, "Logging in");
-        SaveSharedPreference.setUserName(this, userName);
+        ActiveUser.setUserKey(this, userName);
         startMainActivity();
     }
 

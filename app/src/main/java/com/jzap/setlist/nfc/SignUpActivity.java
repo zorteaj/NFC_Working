@@ -4,17 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -58,7 +52,7 @@ public class SignUpActivity extends AppCompatActivity {
             public void onClick(View view) {
                 // TODO: Validate
                 HashSet<String> contacts = new HashSet<>(); // TODO: Put contacts in here?
-                String token = SaveSharedPreference.getToken(context);
+                String token = ActiveUser.getToken(context);
                 User user = new User(mEmailEditText.getText().toString(),
                         mFirstNameEditText.getText().toString(),
                         mLastNameEdtiText.getText().toString(),
@@ -76,7 +70,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     // TODO: This is duplicated from SignInActivity
     private void logIn(String userName) {
-        SaveSharedPreference.setUserName(this, userName);
+        ActiveUser.setUserKey(this, userName);
         startMainActivity();
     }
 

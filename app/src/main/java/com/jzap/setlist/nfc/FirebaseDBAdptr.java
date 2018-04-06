@@ -50,9 +50,7 @@ public class FirebaseDBAdptr {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // TODO: I'm clearing the entire set of users and replacing them.  There's probably a better way.
                 users = new HashMap<>();
-                int count = 0;
                 for(DataSnapshot userDBSnapShot : dataSnapshot.getChildren()) {
-                    count++;
                     try {
                         User user = new User(userDBSnapShot);
                         if (user != null) {

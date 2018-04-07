@@ -40,6 +40,7 @@ public class ContactActivity extends AppCompatActivity {
     private TextView mContactName;
     private Button mRequestButton;
     private Button mAcceptRequestButton;
+    private Button mRemoveContactButton;
     private TableLayout mTable;
     private TextView mContactEmail;
     private TextView mContactWebsite;
@@ -49,8 +50,6 @@ public class ContactActivity extends AppCompatActivity {
     private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
     private DatabaseReference mUsersRef = mRootRef.child("users");
     private DatabaseReference mRequestsRef = mRootRef.child("requests");
-
-    DatabaseReference mThisUserRef;
 
     private HashMap<String, User> mUsers;
 
@@ -67,11 +66,13 @@ public class ContactActivity extends AppCompatActivity {
         setUpDisplay();
         setUpRequestButton();
         setUpAcceptButton();
+        setUpRemoveButton();
 
         Intent intent = getIntent();
 
         if(intent.getAction() == "CONTACT_REQUEST") {
             mThisContactKey = User.cleanEmail(intent.getStringExtra("REQUESTOR"));
+            Log.i(TAG, "Request id = " + intent.getStringExtra("REQUEST_ID"));
         } else if (intent.getAction() == NfcAdapter.ACTION_NDEF_DISCOVERED) {
             processTag(intent);
         } else {
@@ -90,6 +91,8 @@ public class ContactActivity extends AppCompatActivity {
         mAcceptRequestButton.setVisibility(View.INVISIBLE);
         mContactEmail = (TextView) findViewById(R.id.userEmailTextView);
         mContactWebsite = (TextView) findViewById(R.id.userWebsiteTextView);
+        mRemoveContactButton = (Button) findViewById(R.id.removeContatButton);
+        mRemoveContactButton.setVisibility(View.VISIBLE);
     }
 
     private void setUpRequestButton() {
@@ -102,13 +105,17 @@ public class ContactActivity extends AppCompatActivity {
     }
 
     private void makeRequest() {
-        mUsersRef.child(mThisContactKey).child("contactRequests").child(mActiveUser.getCleanEmail()).setValue(mActiveUser.getCleanEmail());
-
+        // Create the request, used for notification
         DatabaseReference requestRef = mRequestsRef.push();
         requestRef.child("token").setValue(mThisContact.getToken());
         // TODO: This should probably use the key like everything else, if for nothing but consistency
         requestRef.child("requestor").setValue(mActiveUser.getEmail());
         requestRef.child("outstanding").setValue("true");
+
+        // Put the contact request in the user's contact request list
+        DatabaseReference contactRequests = mUsersRef.child(mThisContactKey).child("contactRequests");
+        DatabaseReference contactRequest = contactRequests.child(mActiveUser.getCleanEmail());
+        contactRequest.child("requestKey").setValue(requestRef.getKey());
     }
 
     private void setUpAcceptButton() {
@@ -118,7 +125,37 @@ public class ContactActivity extends AppCompatActivity {
                 // Add to contacts list
                 mUsersRef.child(mThisContactKey).child("contacts").child(mActiveUser.getCleanEmail()).setValue(mActiveUser.getCleanEmail());
                 // Delete the contact request
-                mUsersRef.child(mActiveUser.getCleanEmail()).child("contactRequests").child(mThisContactKey).removeValue();
+                //mUsersRef.child(mActiveUser.getCleanEmail()).child("contactRequests").child(mThisContactKey).removeValue();
+
+                DatabaseReference contactRequest = mUsersRef.child(mActiveUser.getCleanEmail()).child("contactRequests").child(mThisContactKey);
+                // Delete the request (for notification)
+                Log.i(TAG, "attempting to delete this request: " + contactRequest.child("requestKey").getKey());
+                //mRequestsRef.child(contactRequest.child("requestKey").getKey()).removeValue();
+                contactRequest.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        dataSnapshot.child("requestKey").getRef().removeValue();
+                        mRequestsRef.child(dataSnapshot.child("requestKey").getValue(String.class)).removeValue();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+
+                // Delete the contact request
+                contactRequest.removeValue();
+            }
+        });
+    }
+
+    private void setUpRemoveButton() {
+        mRemoveContactButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mUsersRef.child(mActiveUser.getCleanEmail()).child("contacts").child(mThisContactKey).removeValue();
+                mUsersRef.child(mThisContactKey).child("contacts").child(mActiveUser.getCleanEmail()).removeValue();
             }
         });
     }
@@ -128,8 +165,12 @@ public class ContactActivity extends AppCompatActivity {
         mContactName = (TextView) findViewById(R.id.userNameTextView);
         mContactName.setText(mThisContact.getFirstName() + " " + mThisContact.getLastName());
 
-        if(mActiveUser.getContacts().contains(mThisContact.getCleanEmail()) || mActiveUser.getCleanEmail().equals(mThisContactKey)) {
-            displayContact();
+        if(mActiveUser.getContacts().contains(mThisContact.getCleanEmail())) {
+            Log.i(TAG, "Not self");
+            displayContact(false);
+        } else if(mActiveUser.getCleanEmail().equals(mThisContactKey)) {
+            Log.i(TAG, "Self");
+            displayContact(true);
         } else {
             displayStranger();
         }
@@ -140,15 +181,15 @@ public class ContactActivity extends AppCompatActivity {
 
     // TODO: Should this be part of the DB Adptr?
     private void setUpContactRequest() {
-        mUsersRef.child(mActiveUser.getCleanEmail()).addListenerForSingleValueEvent(new ValueEventListener() {
+        mUsersRef.child(mActiveUser.getCleanEmail()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                DataSnapshot contactRequests = dataSnapshot.child("contactRequests");
-                for(DataSnapshot contact : contactRequests.getChildren()) {
-                    // If this contact is in this user's contact requests
-                    if(contact.getKey().equals(mThisContact.getCleanEmail())) {
-                        mAcceptRequestButton.setVisibility(View.VISIBLE);
-                    }
+                // If this contact is in this user's contact requests
+                boolean isContactRequest = dataSnapshot.child("contactRequests").child(mThisContact.getCleanEmail()).exists();
+                if(isContactRequest) {
+                    mAcceptRequestButton.setVisibility(View.VISIBLE);
+                } else {
+                    mAcceptRequestButton.setVisibility(View.INVISIBLE);
                 }
             }
 
@@ -160,9 +201,15 @@ public class ContactActivity extends AppCompatActivity {
 
     }
 
-    private void displayContact() {
+    private void displayContact(boolean self) {
         mRequestButton.setVisibility(View.INVISIBLE);
         mTable.setVisibility(View.VISIBLE);
+
+        if(self) {
+            mRemoveContactButton.setVisibility(View.INVISIBLE);
+        } else {
+            mRemoveContactButton.setVisibility(View.VISIBLE);
+        }
 
         mContactName.setTextColor(Color.BLUE);
 
@@ -173,6 +220,7 @@ public class ContactActivity extends AppCompatActivity {
     private void displayStranger() {
         mTable.setVisibility(View.INVISIBLE);
         mRequestButton.setVisibility(View.VISIBLE);
+        mRemoveContactButton.setVisibility(View.INVISIBLE);
     }
 
     // TODO: This is duplicated
@@ -192,6 +240,7 @@ public class ContactActivity extends AppCompatActivity {
         mDBReady = true;
         if (mRequestOutstanding) {
             makeRequest();
+            mRequestOutstanding = false;
         }
     }
 
@@ -229,12 +278,10 @@ public class ContactActivity extends AppCompatActivity {
     private void processTag(Intent intent) {
         Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
         if(rawMsgs != null) {
-            Log.i(TAG, "There are " + rawMsgs.length + " messages in this tag");
             NdefMessage[] msgs = new NdefMessage[rawMsgs.length];
             for(int i = 0; i < rawMsgs.length; i++) {
                 msgs[i] = (NdefMessage) rawMsgs[i];
                 NdefRecord[] records = msgs[i].getRecords();
-                Log.i(TAG, "There are " + records.length + " records in this message");
                 for(int j = 0; j < records.length; j++) {
                     String payload = new String(records[j].getPayload());
                     Log.i(TAG, payload);

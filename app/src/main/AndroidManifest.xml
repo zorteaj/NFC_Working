@@ -3,6 +3,8 @@
     package="com.jzap.setlist.nfc">
 
     <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="false"
@@ -27,7 +29,7 @@
                 <data android:mimeType="text/greet.user" />
             </intent-filter>
         </activity>
-        <activity android:name=".SignUpActivity" android:noHistory="true"></activity>
+        <activity android:name=".SignUpActivity"></activity>
         <activity android:name=".MainActivity"></activity>
         <activity android:name=".SettingsActivity"></activity>
         <service android:name=".MyFirebaseMessagingService">

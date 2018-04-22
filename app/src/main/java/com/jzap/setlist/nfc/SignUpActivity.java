@@ -25,7 +25,8 @@ public class SignUpActivity extends AppCompatActivity {
 
     private Button mSignUpButton;
     private EditText mFirstNameEditText;
-    private EditText mLastNameEdtiText;
+    private EditText mLastNameEditText;
+    private EditText mUserNameEditText;
     private EditText mPhoneEditText;
     private EditText mEmailEditText;
     private EditText mPasswordEditText;
@@ -40,12 +41,13 @@ public class SignUpActivity extends AppCompatActivity {
 
     private void setUpSignUp() {
         mFirstNameEditText = (EditText) findViewById(R.id.firstNameEditText);
-        mLastNameEdtiText = (EditText) findViewById(R.id.lastNameEditText);
+        mLastNameEditText = (EditText) findViewById(R.id.lastNameEditText);
+        mUserNameEditText = (EditText) findViewById(R.id.userNameEditText);
         mPhoneEditText = (EditText) findViewById(R.id.phoneEditText);
         mEmailEditText = (EditText) findViewById(R.id.emailEditText);
         mPasswordEditText = (EditText) findViewById(R.id.passwordEditText);
 
-        mSignUpButton = (Button) findViewById(R.id.signUpButton);
+        mSignUpButton = (Button) findViewById(R.id.submitChangesButton);
 
         final String defaultWebsite = "defaultWebsite";
         final String defaultPhotoURL = "http://mehandis.net/wp-content/uploads/2017/12/default-user.png";
@@ -59,7 +61,8 @@ public class SignUpActivity extends AppCompatActivity {
                 String token = ActiveUser.getToken(context);
                 User user = new User(mEmailEditText.getText().toString(),
                         mFirstNameEditText.getText().toString(),
-                        mLastNameEdtiText.getText().toString(),
+                        mLastNameEditText.getText().toString(),
+                        mUserNameEditText.getText().toString(),
                         defaultWebsite,
                         mPasswordEditText.getText().toString(),
                         mPhoneEditText.getText().toString(),

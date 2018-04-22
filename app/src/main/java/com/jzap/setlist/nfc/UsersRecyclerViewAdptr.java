@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,16 +22,14 @@ import java.util.List;
 public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerViewAdptr.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView userFirstName;
-        public TextView userLastName;
+        public TextView userName;
         public TextView friendFlag;
         public CardView cardView;
 
         public ViewHolder(CardView cardView) {
             super(cardView);
             this.cardView = cardView;
-            userFirstName = (TextView) cardView.findViewById(R.id.userFirstName);
-            userLastName = (TextView) cardView.findViewById(R.id.userLastName);
+            userName = (TextView) cardView.findViewById(R.id.userName);
             friendFlag = (TextView) cardView.findViewById(R.id.friendFlagTextView);
         }
     }
@@ -45,7 +42,6 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
 
     public UsersRecyclerViewAdptr(HashMap<String, User> users, Context context) {
         mUsers = users;
-        String user = ActiveUser.getUserKey(context);
         mActiveUser = ActiveUser.getActiveUser(context, mUsers);
         mUsersList = new ArrayList<>(mUsers.values());
     }
@@ -60,8 +56,7 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
 
     @Override
     public void onBindViewHolder(UsersRecyclerViewAdptr.ViewHolder holder, final int position) {
-        holder.userFirstName.setText(mUsersList.get(position).getFirstName());
-        holder.userLastName.setText(mUsersList.get(position).getLastName());
+        holder.userName.setText(mUsersList.get(position).getUserName());
         if(mActiveUser.getContacts().contains(mUsersList.get(position).getCleanEmail())) {
             holder.friendFlag.setText("Friend");
             holder.friendFlag.setTextColor(Color.BLUE);

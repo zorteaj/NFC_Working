@@ -1,6 +1,5 @@
 package com.jzap.setlist.nfc;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -10,13 +9,11 @@ import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,13 +25,11 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -47,7 +42,9 @@ public class ContactActivity extends AppCompatActivity {
 
     private static final String TAG = "JAZ_NFC";
 
-    private TextView mContactName;
+    private TextView mContactUserName;
+    private TextView mContactFirstName;
+    private TextView mContactLastName;
     private ImageView mPhotoImageView;
     private Button mRequestButton;
     private Button mAcceptRequestButton;
@@ -99,6 +96,8 @@ public class ContactActivity extends AppCompatActivity {
         mRequestButton.setVisibility(View.INVISIBLE);
         mAcceptRequestButton = (Button) findViewById(R.id.acceptRequestButton);
         mAcceptRequestButton.setVisibility(View.INVISIBLE);
+        mContactFirstName = (TextView) findViewById(R.id.userFirstName);
+        mContactLastName = (TextView) findViewById(R.id.userLastName);
         mContactEmail = (TextView) findViewById(R.id.userEmailTextView);
         mContactWebsite = (TextView) findViewById(R.id.userWebsiteTextView);
         mRemoveContactButton = (Button) findViewById(R.id.removeContatButton);
@@ -180,8 +179,8 @@ public class ContactActivity extends AppCompatActivity {
             return;
         }
 
-        mContactName = (TextView) findViewById(R.id.userNameTextView);
-        mContactName.setText(mThisContact.getFirstName() + " " + mThisContact.getLastName());
+        mContactUserName = (TextView) findViewById(R.id.userNameTextView);
+        mContactUserName.setText(mThisContact.getUserName());
 
         if(mActiveUser.getContacts().contains(mThisContact.getCleanEmail())) {
             displayContact(false);
@@ -246,8 +245,10 @@ public class ContactActivity extends AppCompatActivity {
             mRemoveContactButton.setVisibility(View.VISIBLE);
         }
 
-        mContactName.setTextColor(Color.BLUE);
+        mContactUserName.setTextColor(Color.BLUE);
 
+        mContactFirstName.setText(mThisContact.getFirstName());
+        mContactLastName.setText(mThisContact.getLastName());
         mContactEmail.setText(mThisContact.getEmail());
         mContactWebsite.setText(mThisContact.getWebsite());
     }

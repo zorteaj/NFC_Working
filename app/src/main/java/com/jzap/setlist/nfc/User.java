@@ -21,14 +21,15 @@ public class User {
     private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
     private DatabaseReference mUsersRef = mRootRef.child("users");
 
-    private String email, firstName, lastName, website, password, phone, token, photoURL, cleanEmail;
+    private String email, firstName, lastName, userName, website, password, phone, token, photoURL, cleanEmail;
     private HashSet<String> contacts = new HashSet<>();
 
-    public User(String email, String firstName, String lastName, String website, String password, String phone, String token, String photoURL, HashSet<String> contacts) {
+    public User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, HashSet<String> contacts) {
         this.email = email;
         this.website = website;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.userName = userName;
         this.password = password;
         this.phone = phone;
         this.token = token;
@@ -37,7 +38,7 @@ public class User {
         this.cleanEmail = cleanEmail(email);
     }
 
-    private User(String email, String firstName, String lastName, String website, String password, String phone, String token, String photoURL, DataSnapshot userDBSnapshot) {
+    private User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, DataSnapshot userDBSnapshot) {
         DataSnapshot contactsDB = userDBSnapshot.child("contacts");
         for (DataSnapshot contact : contactsDB.getChildren()) {
             contacts.add(contact.getValue(String.class));
@@ -46,6 +47,7 @@ public class User {
         this.website = website;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.userName = userName;
         this.password = password;
         this.phone = phone;
         this.token = token;
@@ -57,6 +59,7 @@ public class User {
         this( userDBSnapshot.child("email").getValue(String.class),
                 userDBSnapshot.child("firstName").getValue(String.class),
                 userDBSnapshot.child("lastName").getValue(String.class),
+                userDBSnapshot.child("userName").getValue(String.class),
                 userDBSnapshot.child("website").getValue(String.class),
                 userDBSnapshot.child("password").getValue(String.class),
                 userDBSnapshot.child("phone").getValue(String.class),
@@ -72,6 +75,7 @@ public class User {
         user.child("website").setValue(website);
         user.child("firstName").setValue(firstName);
         user.child("lastName").setValue(lastName);
+        user.child("userName").setValue(userName);
         user.child("password").setValue(password);
         user.child("phone").setValue(phone);
         user.child("token").setValue(token);
@@ -94,6 +98,8 @@ public class User {
     public String getFirstName() {return firstName; }
 
     public String getLastName() { return lastName; }
+
+    public String getUserName() { return userName; }
 
     public String getPassword() { return password; }
 

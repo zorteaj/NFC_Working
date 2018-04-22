@@ -27,10 +27,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "JAZ_NFC";
 
-    private GoogleSignInClient mGoogleSignInClient;
-
-    private Button mLogOutButton;
-    private TextView mAccountNameTextView;
+    private Button mSettingsButton;
+    private TextView mCurrentUserNameTextView;
     private RecyclerView mUsersRecyclerView;
 
     @Override
@@ -40,8 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
         setUpDatabase();
         setUpUserAccount();
-        setUpGoogleSignOut();
-        setUpLogOut();
+        setUpSettings();
         //debugPrintToken();
     }
 
@@ -50,46 +47,26 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
     }
 
-    private void setUpLogOut() {
+    private void setUpSettings() {
         final Context context = this;
         final Activity activity = this;
-        mLogOutButton = (Button) findViewById(R.id.logOutButton);
-        mLogOutButton.setOnClickListener(new View.OnClickListener() {
+        mSettingsButton = (Button) findViewById(R.id.settingsButton);
+        mSettingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO: Reassign the token?
-                ActiveUser.clearUserKey(context);
-                startSignInActivity();
-
-                mGoogleSignInClient.signOut().addOnCompleteListener(activity, new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        Log.i(TAG, "Signed out");
-                    }
-                });
+                startSettingsActivity();
             }
         });
     }
 
-    private void setUpGoogleSignOut() {
-        // Configure sign-in to request the user's ID, email address, and basic
-        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-
-        // Build a GoogleSignInClient with the options specified by gso.
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-    }
-
-    private void startSignInActivity() {
-        Intent signInIntent = new Intent(this, SignInActivity.class);
+    private void startSettingsActivity() {
+        Intent signInIntent = new Intent(this, SettingsActivity.class);
         startActivity(signInIntent);
     }
 
     private void setUpUserAccount() {
-       mAccountNameTextView = (TextView) findViewById(R.id.allUsersTextView); // TODO: hack
-       mAccountNameTextView.setText(ActiveUser.getUserKey(this));
+       mCurrentUserNameTextView = (TextView) findViewById(R.id.currentUserNameTextView); // TODO: hack
+       mCurrentUserNameTextView.setText(ActiveUser.getUserKey(this));
    }
 
     private void displayUsers(HashMap<String, User> users) {

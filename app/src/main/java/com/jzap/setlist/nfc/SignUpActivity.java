@@ -8,6 +8,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.HashSet;
 
 /**
@@ -45,6 +48,7 @@ public class SignUpActivity extends AppCompatActivity {
         mSignUpButton = (Button) findViewById(R.id.signUpButton);
 
         final String defaultWebsite = "defaultWebsite";
+        final String defaultPhotoURL = "http://mehandis.net/wp-content/uploads/2017/12/default-user.png";
         final Context context = this;
 
         mSignUpButton.setOnClickListener(new View.OnClickListener() {
@@ -60,6 +64,7 @@ public class SignUpActivity extends AppCompatActivity {
                         mPasswordEditText.getText().toString(),
                         mPhoneEditText.getText().toString(),
                         token,
+                        defaultPhotoURL,
                         contacts
                 );
                 user.postToDB();
@@ -71,7 +76,15 @@ public class SignUpActivity extends AppCompatActivity {
     // TODO: This is duplicated from SignInActivity
     private void logIn(String userName) {
         ActiveUser.setUserKey(this, userName);
+        writeTokenToDB(userName, ActiveUser.getToken(this));
         startMainActivity();
+    }
+
+    // TODO: This is duplicated in FirebaseIDService and SignInActivity
+    private void writeTokenToDB(final String userName, final String token) {
+        DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference usersRef = rootRef.child("users");
+        usersRef.child(userName).child("token").setValue(token);
     }
 
     // TODO: This is duplicated from SignInActivity

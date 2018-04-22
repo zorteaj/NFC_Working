@@ -14,6 +14,14 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
+    <ImageView
+        android:id="@+id/photoImageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/userNameTextView" />
+
     <Button
         android:id="@+id/requestContactButton"
         android:layout_width="wrap_content"
@@ -28,9 +36,10 @@
         android:id="@+id/contactDetailsTable"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:padding="5dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/userNameTextView">
+        app:layout_constraintTop_toBottomOf="@id/photoImageView">
 
         <TableRow
             android:layout_width="match_parent"
@@ -45,8 +54,7 @@
             <TextView
                 android:id="@+id/userEmailTextView"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TextView" />
+                android:layout_height="wrap_content" />
         </TableRow>
 
         <TableRow
@@ -62,8 +70,7 @@
             <TextView
                 android:id="@+id/userWebsiteTextView"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TextView" />
+                android:layout_height="wrap_content" />
         </TableRow>
 
     </TableLayout>

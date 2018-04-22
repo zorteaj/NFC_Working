@@ -21,10 +21,10 @@ public class User {
     private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
     private DatabaseReference mUsersRef = mRootRef.child("users");
 
-    private String email, firstName, lastName, website, password, phone, token, cleanEmail;
+    private String email, firstName, lastName, website, password, phone, token, photoURL, cleanEmail;
     private HashSet<String> contacts = new HashSet<>();
 
-    public User(String email, String firstName, String lastName, String website, String password, String phone, String token, HashSet<String> contacts) {
+    public User(String email, String firstName, String lastName, String website, String password, String phone, String token, String photoURL, HashSet<String> contacts) {
         this.email = email;
         this.website = website;
         this.firstName = firstName;
@@ -32,11 +32,12 @@ public class User {
         this.password = password;
         this.phone = phone;
         this.token = token;
+        this.photoURL = photoURL;
         this.contacts = contacts;
         this.cleanEmail = cleanEmail(email);
     }
 
-    private User(String email, String firstName, String lastName, String website, String password, String phone, String token, DataSnapshot userDBSnapshot) {
+    private User(String email, String firstName, String lastName, String website, String password, String phone, String token, String photoURL, DataSnapshot userDBSnapshot) {
         DataSnapshot contactsDB = userDBSnapshot.child("contacts");
         for (DataSnapshot contact : contactsDB.getChildren()) {
             contacts.add(contact.getValue(String.class));
@@ -48,6 +49,7 @@ public class User {
         this.password = password;
         this.phone = phone;
         this.token = token;
+        this.photoURL = photoURL;
         this.cleanEmail = cleanEmail(email);
     }
 
@@ -59,6 +61,7 @@ public class User {
                 userDBSnapshot.child("password").getValue(String.class),
                 userDBSnapshot.child("phone").getValue(String.class),
                 userDBSnapshot.child("token").getValue(String.class),
+                userDBSnapshot.child("photoURL").getValue(String.class),
                 userDBSnapshot );
     }
 
@@ -72,6 +75,7 @@ public class User {
         user.child("password").setValue(password);
         user.child("phone").setValue(phone);
         user.child("token").setValue(token);
+        user.child("photoURL").setValue(photoURL);
         // TODO: Do I ever need to push the contacts list?
     }
 
@@ -98,6 +102,8 @@ public class User {
     public HashSet<String> getContacts() { return contacts; }
 
     public String getToken() { return token; }
+
+    public String getPhotoURL() { return photoURL; }
 
     public String getCleanEmail() { return cleanEmail; }
 

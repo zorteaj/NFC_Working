@@ -3,19 +3,29 @@ package com.jzap.setlist.nfc;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
@@ -38,6 +48,7 @@ public class ContactActivity extends AppCompatActivity {
     private static final String TAG = "JAZ_NFC";
 
     private TextView mContactName;
+    private ImageView mPhotoImageView;
     private Button mRequestButton;
     private Button mAcceptRequestButton;
     private Button mRemoveContactButton;
@@ -72,7 +83,6 @@ public class ContactActivity extends AppCompatActivity {
 
         if(intent.getAction() == "CONTACT_REQUEST") {
             mThisContactKey = User.cleanEmail(intent.getStringExtra("REQUESTOR"));
-            Log.i(TAG, "Request id = " + intent.getStringExtra("REQUEST_ID"));
         } else if (intent.getAction() == NfcAdapter.ACTION_NDEF_DISCOVERED) {
             processTag(intent);
         } else {
@@ -93,6 +103,7 @@ public class ContactActivity extends AppCompatActivity {
         mContactWebsite = (TextView) findViewById(R.id.userWebsiteTextView);
         mRemoveContactButton = (Button) findViewById(R.id.removeContatButton);
         mRemoveContactButton.setVisibility(View.VISIBLE);
+        mPhotoImageView = (ImageView) findViewById(R.id.photoImageView);
     }
 
     private void setUpRequestButton() {
@@ -162,14 +173,19 @@ public class ContactActivity extends AppCompatActivity {
 
     // TODO: The user might not be ready, if the DB did not reply yet
     private void display() {
+
+        if(mThisContact == null) {
+            Log.e(TAG, "Trying to display a null contact");
+            Log.e(TAG, "Contact id = " + mThisContactKey);
+            return;
+        }
+
         mContactName = (TextView) findViewById(R.id.userNameTextView);
         mContactName.setText(mThisContact.getFirstName() + " " + mThisContact.getLastName());
 
         if(mActiveUser.getContacts().contains(mThisContact.getCleanEmail())) {
-            Log.i(TAG, "Not self");
             displayContact(false);
         } else if(mActiveUser.getCleanEmail().equals(mThisContactKey)) {
-            Log.i(TAG, "Self");
             displayContact(true);
         } else {
             displayStranger();
@@ -201,7 +217,26 @@ public class ContactActivity extends AppCompatActivity {
 
     }
 
+    private void displayPhoto() {
+        // TODO: Can't start a load for a destroyed activity crash?
+        Glide.with(getApplicationContext()).load(mThisContact.getPhotoURL()).listener(new RequestListener<Drawable>() {
+            @Override
+            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                Log.e(TAG,"Glide failed");
+                Log.e(TAG, e.toString());
+                return false;
+            }
+
+            @Override
+            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                return false;
+            }
+        }).into(mPhotoImageView);
+    }
+
     private void displayContact(boolean self) {
+        displayPhoto();
+
         mRequestButton.setVisibility(View.INVISIBLE);
         mTable.setVisibility(View.VISIBLE);
 
@@ -229,6 +264,7 @@ public class ContactActivity extends AppCompatActivity {
     }
 
     private void setUpThisContact(HashMap<String, User> users) {
+        Log.i(TAG, "Setting up contact");
         mThisContact = users.get(mThisContactKey);
     }
 

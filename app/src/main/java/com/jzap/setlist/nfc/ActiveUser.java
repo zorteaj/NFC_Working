@@ -50,6 +50,12 @@ public class ActiveUser {
     // TODO: This will wipe my token right now as well
     public static void clearUserKey(Context context) {
         SharedPreferences.Editor editor = getSharedPreferences(context).edit();
+        editor.putString(USER_KEY, "");
+        editor.commit();
+    }
+
+    public static void clearAllPreferences(Context context) {
+        SharedPreferences.Editor editor = getSharedPreferences(context).edit();
         editor.clear();
         editor.commit();
     }

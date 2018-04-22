@@ -21,20 +21,11 @@ public class FirebaseIDService extends FirebaseInstanceIdService {
     public void onTokenRefresh() {
         // Get updated InstanceID token.
         String refreshedToken = FirebaseInstanceId.getInstance().getToken();
-        Log.d(TAG, "Refreshed token: " + refreshedToken);
+        Log.i(TAG, "Refreshed token: " + refreshedToken);
 
-        // TODO: Implement this method to send any registration to your app's servers.
         sendRegistrationToServer(refreshedToken);
     }
 
-    /**
-     * Persist token to third-party servers.
-     *
-     * Modify this method to associate the user's FCM InstanceID token with any server-side account
-     * maintained by your application.
-     *
-     * @param token The new token.
-     */
     private void sendRegistrationToServer(String token) {
         // If a user is already signed in, update their token
         String userName = ActiveUser.getUserKey(this);
@@ -45,28 +36,6 @@ public class FirebaseIDService extends FirebaseInstanceIdService {
     }
 
     private void writeTokenToDB(final String userName, final String token) {
-
-       mUsersRef.child(userName).child(token).setValue(token);
-
-
-       /* final HashSet<String> contactsSet = new HashSet<>();
-
-
-
-        mUsersRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for(DataSnapshot snap : dataSnapshot.getChildren()) {
-                    if(snap.child("email").getValue().equals(userName)) {
-                        snap.getRef().child("token").setValue(token);
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });*/
+       mUsersRef.child(userName).child("token").setValue(token);
     }
 }

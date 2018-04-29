@@ -139,7 +139,6 @@ public class SignInActivity extends AppCompatActivity {
         mSignInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.i(TAG, "Button clicked");
                 mSignInEmailEditText = (EditText) findViewById(R.id.signInEmail) ;
                 mSignInPasswordEditText = (EditText) findViewById(R.id.signInPassword);
                 SignIn signIn = new SignIn(mSignInEmailEditText.getText().toString(), mSignInPasswordEditText.getText().toString());

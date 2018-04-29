@@ -144,17 +144,47 @@ public class SignUpActivity extends AppCompatActivity {
 
         mSignUpButton = (Button) findViewById(R.id.submitChangesButton);
 
-        final String defaultWebsite = "defaultWebsite";
-        final String defaultPhotoURL = "http://mehandis.net/wp-content/uploads/2017/12/default-user.png";
-        final Context context = this;
+
 
         mSignUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                uploadPicture(mEmailEditText.getText().toString());
+            }
+        });
+    }
+
+    private void uploadPicture(String cleanEmail) {
+        StorageReference pictureRef = storageRef.child("userImages").child(cleanEmail + ".jpg");
+
+        // Get the data from an ImageView as bytes
+        mProfilePictureImageView.setDrawingCacheEnabled(true);
+        mProfilePictureImageView.buildDrawingCache();
+        Bitmap bitmap = mProfilePictureImageView.getDrawingCache();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        final String defaultWebsite = "defaultWebsite";
+        final String defaultPhotoURL = "http://mehandis.net/wp-content/uploads/2017/12/default-user.png";
+        final Context context = this;
+
+        UploadTask uploadTask = pictureRef.putBytes(data);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                Uri pictureUrl = taskSnapshot.getDownloadUrl();
+                String pictureUrlS = pictureUrl.toString();
+                Log.i(TAG, "Picture download url = " + pictureUrl.toString());
+
                 // TODO: Validate
-
-                uploadPicture();
-
+                // TODO: I'm waiting to upload the user to the db until the profile picture uploads to storage, which might not be the best idea, and is a bit confusing
                 HashSet<String> contacts = new HashSet<>(); // TODO: Put contacts in here?
                 String token = ActiveUser.getToken(context);
                 User user = new User(mEmailEditText.getText().toString(),
@@ -165,37 +195,11 @@ public class SignUpActivity extends AppCompatActivity {
                         mPasswordEditText.getText().toString(),
                         mPhoneEditText.getText().toString(),
                         token,
-                        defaultPhotoURL,
+                        pictureUrlS,
                         contacts
                 );
                 user.postToDB();
                 logIn(User.cleanEmail(mEmailEditText.getText().toString()));
-            }
-        });
-    }
-
-    private void uploadPicture() {
-        StorageReference testRef = storageRef.child("jzTestImage").child("pic.jpg");
-
-        // Get the data from an ImageView as bytes
-        mProfilePictureImageView.setDrawingCacheEnabled(true);
-        mProfilePictureImageView.buildDrawingCache();
-        Bitmap bitmap = mProfilePictureImageView.getDrawingCache();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] data = baos.toByteArray();
-
-        UploadTask uploadTask = testRef.putBytes(data);
-        uploadTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                // Handle unsuccessful uploads
-            }
-        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                Uri downloadUrl = taskSnapshot.getDownloadUrl();
             }
         });
 

@@ -9,7 +9,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Switch;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -19,6 +21,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -36,6 +39,9 @@ public class SettingsActivity extends AppCompatActivity {
     private EditText mUserNameChangeEditText;
     private EditText mPhoneChangeEditText;
     private EditText mPasswordChangeEditText;
+    private Switch mPrivateAccountSwitch;
+
+    private User mActiveUser;
 
     private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
     private DatabaseReference mUsersRef = mRootRef.child("users");
@@ -44,6 +50,9 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+
+        setUpDatabase();
+        //setUpPrivateAccountSwitch();
 
         setUpChanges();
         setUpGoogleSignOut();
@@ -71,6 +80,52 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
+    // TODO: This is done elsewhere - make it common?
+    private void setUpDatabase() {
+        HashMap<String, User> users = FirebaseDBAdptr.getUsers();
+        if(users.size() != 0) {
+            refresh(users);
+        }
+        FirebaseDBAdptr.register(new FirebaseDBUsersCallback() {
+            @Override
+            public void call(int what, Object obj) {
+                super.call(what, obj);
+                refresh(users);
+            }
+        });
+    }
+
+    private void refresh(HashMap<String, User> users) {
+        Log.i(TAG, "Refresh");
+        //mUsers = users;
+        setUpThisUser(users);
+        setUpPrivateAccountSwitch();
+        //setUpThisContact(users);
+        //display();
+        //mDBReady = true;
+        //if (mRequestOutstanding) {
+            //makeRequest();
+            //mRequestOutstanding = false;
+        //}
+    }
+
+    // TODO: This is duplicated
+    private void setUpThisUser(HashMap<String, User> users) {
+        mActiveUser = ActiveUser.getActiveUser(this, users);
+    }
+
+    private void setUpPrivateAccountSwitch() {
+        mPrivateAccountSwitch = (Switch) findViewById(R.id.privateSwitch);
+        mPrivateAccountSwitch.setChecked(mActiveUser.getPrivateAccount());
+
+        mPrivateAccountSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                mPrivateAccountSwitch.setChecked(b);
+            }
+        });
+    }
+
     private void setUpChanges() {
         mUserNameChangeEditText = (EditText) findViewById(R.id.userNameChangeEditText);
         mPhoneChangeEditText = (EditText) findViewById(R.id.phoneChangeEditText);
@@ -90,6 +145,7 @@ public class SettingsActivity extends AppCompatActivity {
                     userRef.child("phone").setValue(mPasswordChangeEditText.getText().toString());
                 if(mPasswordChangeEditText.getText().toString().length() != 0)
                     userRef.child("password").setValue(mPasswordChangeEditText.getText().toString());
+                userRef.child("privateAccount").setValue(mPrivateAccountSwitch.isChecked());
             }
         });
     }

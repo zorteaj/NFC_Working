@@ -238,6 +238,7 @@ public class SignInActivity extends AppCompatActivity {
                         "no phone",
                         token,
                         account.getPhotoUrl().toString(),
+                        false,
                         contacts
                 );
                 user.postToDB();

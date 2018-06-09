@@ -22,9 +22,10 @@ public class User {
     private DatabaseReference mUsersRef = mRootRef.child("users");
 
     private String email, firstName, lastName, userName, website, password, phone, token, photoURL, cleanEmail;
+    private boolean privateAccount = false;
     private HashSet<String> contacts = new HashSet<>();
 
-    public User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, HashSet<String> contacts) {
+    public User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, boolean privateAccount, HashSet<String> contacts) {
         this.email = email;
         this.website = website;
         this.firstName = firstName;
@@ -36,9 +37,10 @@ public class User {
         this.photoURL = photoURL;
         this.contacts = contacts;
         this.cleanEmail = cleanEmail(email);
+        this.privateAccount = privateAccount;
     }
 
-    private User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, DataSnapshot userDBSnapshot) {
+    private User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, boolean privateAccount, DataSnapshot userDBSnapshot) {
         DataSnapshot contactsDB = userDBSnapshot.child("contacts");
         for (DataSnapshot contact : contactsDB.getChildren()) {
             contacts.add(contact.getValue(String.class));
@@ -53,6 +55,7 @@ public class User {
         this.token = token;
         this.photoURL = photoURL;
         this.cleanEmail = cleanEmail(email);
+        this.privateAccount = privateAccount;
     }
 
     public User(DataSnapshot userDBSnapshot) {
@@ -65,6 +68,7 @@ public class User {
                 userDBSnapshot.child("phone").getValue(String.class),
                 userDBSnapshot.child("token").getValue(String.class),
                 userDBSnapshot.child("photoURL").getValue(String.class),
+                userDBSnapshot.child("privateAccount").getValue(Boolean.class),
                 userDBSnapshot );
     }
 
@@ -80,6 +84,7 @@ public class User {
         user.child("phone").setValue(phone);
         user.child("token").setValue(token);
         user.child("photoURL").setValue(photoURL);
+        user.child("privateAccount").setValue(privateAccount);
         // TODO: Do I ever need to push the contacts list?
     }
 
@@ -112,6 +117,12 @@ public class User {
     public String getPhotoURL() { return photoURL; }
 
     public String getCleanEmail() { return cleanEmail; }
+
+    public boolean getPrivateAccount() { return privateAccount; }
+
+    public void setPrivateAccount(boolean privateAccount) {
+        this.privateAccount = privateAccount;
+    }
 
     public void addContact(String email) {
         contacts.add(email);

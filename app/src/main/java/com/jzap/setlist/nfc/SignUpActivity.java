@@ -196,6 +196,7 @@ public class SignUpActivity extends AppCompatActivity {
                         mPhoneEditText.getText().toString(),
                         token,
                         pictureUrlS,
+                        false,
                         contacts
                 );
                 user.postToDB();

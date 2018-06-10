@@ -57,7 +57,7 @@ public class ContactActivity extends AppCompatActivity {
 
     private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
     private DatabaseReference mUsersRef = mRootRef.child("users");
-    private DatabaseReference mRequestsRef = mRootRef.child("requests");
+    private DatabaseReference mNotificationsRef = mRootRef.child("notifications");
 
     private HashMap<String, User> mUsers;
 
@@ -112,9 +112,6 @@ public class ContactActivity extends AppCompatActivity {
                 // If this contact has a private account, send a friend request;
                 // otherwise, automatically add this person as a friend and notify them
 
-                Log.i(TAG, "this contact name is " + mThisContact.getUserName());
-                Log.i(TAG, "this contact private account = " + mThisContact.getPrivateAccount());
-
                 if(mThisContact.getPrivateAccount()) {
                     makeRequest();
                 } else {
@@ -126,7 +123,7 @@ public class ContactActivity extends AppCompatActivity {
 
     private void makeRequest() {
         // Create the request, used for notification
-        DatabaseReference requestRef = mRequestsRef.push();
+        DatabaseReference requestRef = mNotificationsRef.push();
         requestRef.child("token").setValue(mThisContact.getToken());
         // TODO: This should probably use the key like everything else, if for nothing but consistency
         requestRef.child("requestor").setValue(mActiveUser.getEmail());
@@ -146,7 +143,7 @@ public class ContactActivity extends AppCompatActivity {
         mUsersRef.child(mActiveUser.getCleanEmail()).child("contacts").child(mThisContact.getCleanEmail()).setValue(mThisContact.getCleanEmail());
 
         // Create the request, used for notification
-        DatabaseReference requestRef = mRequestsRef.push();
+        DatabaseReference requestRef = mNotificationsRef.push();
         requestRef.child("token").setValue(mThisContact.getToken());
         // TODO: This should probably use the key like everything else, if for nothing but consistency
         requestRef.child("requestor").setValue(mActiveUser.getEmail());
@@ -170,7 +167,7 @@ public class ContactActivity extends AppCompatActivity {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         dataSnapshot.child("requestKey").getRef().removeValue();
-                        mRequestsRef.child(dataSnapshot.child("requestKey").getValue(String.class)).removeValue();
+                        mNotificationsRef.child(dataSnapshot.child("requestKey").getValue(String.class)).removeValue();
                     }
 
                     @Override

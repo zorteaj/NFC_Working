@@ -109,7 +109,17 @@ public class ContactActivity extends AppCompatActivity {
         mRequestButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                makeRequest();
+                // If this contact has a private account, send a friend request;
+                // otherwise, automatically add this person as a friend and notify them
+
+                Log.i(TAG, "this contact name is " + mThisContact.getUserName());
+                Log.i(TAG, "this contact private account = " + mThisContact.getPrivateAccount());
+
+                if(mThisContact.getPrivateAccount()) {
+                    makeRequest();
+                } else {
+                    addAndNotifyContact();
+                }
             }
         });
     }
@@ -120,6 +130,8 @@ public class ContactActivity extends AppCompatActivity {
         requestRef.child("token").setValue(mThisContact.getToken());
         // TODO: This should probably use the key like everything else, if for nothing but consistency
         requestRef.child("requestor").setValue(mActiveUser.getEmail());
+        requestRef.child("request").setValue(true);
+        // Outstanding must be set to true last, otherwise notifications will be sent after each change to the request
         requestRef.child("outstanding").setValue("true");
 
         // Put the contact request in the user's contact request list
@@ -128,19 +140,32 @@ public class ContactActivity extends AppCompatActivity {
         contactRequest.child("requestKey").setValue(requestRef.getKey());
     }
 
+    private void addAndNotifyContact() {
+        Log.i(TAG, "Adding contact and notifying them");
+        // Add to contacts list
+        mUsersRef.child(mActiveUser.getCleanEmail()).child("contacts").child(mThisContact.getCleanEmail()).setValue(mThisContact.getCleanEmail());
+
+        // Create the request, used for notification
+        DatabaseReference requestRef = mRequestsRef.push();
+        requestRef.child("token").setValue(mThisContact.getToken());
+        // TODO: This should probably use the key like everything else, if for nothing but consistency
+        requestRef.child("requestor").setValue(mActiveUser.getEmail());
+        requestRef.child("request").setValue(false);
+        // Outstanding must be set to true last, otherwise notifications will be sent after each change to the request
+        requestRef.child("outstanding").setValue("true");
+    }
+
     private void setUpAcceptButton() {
         mAcceptRequestButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Add to contacts list
                 mUsersRef.child(mThisContactKey).child("contacts").child(mActiveUser.getCleanEmail()).setValue(mActiveUser.getCleanEmail());
-                // Delete the contact request
-                //mUsersRef.child(mActiveUser.getCleanEmail()).child("contactRequests").child(mThisContactKey).removeValue();
 
                 DatabaseReference contactRequest = mUsersRef.child(mActiveUser.getCleanEmail()).child("contactRequests").child(mThisContactKey);
+
                 // Delete the request (for notification)
                 Log.i(TAG, "attempting to delete this request: " + contactRequest.child("requestKey").getKey());
-                //mRequestsRef.child(contactRequest.child("requestKey").getKey()).removeValue();
                 contactRequest.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -265,7 +290,7 @@ public class ContactActivity extends AppCompatActivity {
     }
 
     private void setUpThisContact(HashMap<String, User> users) {
-        Log.i(TAG, "Setting up contact");
+        //Log.i(TAG, "Setting up contact");
         mThisContact = users.get(mThisContactKey);
     }
 

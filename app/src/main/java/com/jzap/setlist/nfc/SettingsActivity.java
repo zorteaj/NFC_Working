@@ -52,8 +52,6 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
 
         setUpDatabase();
-        //setUpPrivateAccountSwitch();
-
         setUpChanges();
         setUpGoogleSignOut();
         setUpLogOut();
@@ -96,17 +94,8 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void refresh(HashMap<String, User> users) {
-        Log.i(TAG, "Refresh");
-        //mUsers = users;
         setUpThisUser(users);
         setUpPrivateAccountSwitch();
-        //setUpThisContact(users);
-        //display();
-        //mDBReady = true;
-        //if (mRequestOutstanding) {
-            //makeRequest();
-            //mRequestOutstanding = false;
-        //}
     }
 
     // TODO: This is duplicated

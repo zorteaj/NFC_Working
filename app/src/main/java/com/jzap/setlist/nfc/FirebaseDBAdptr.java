@@ -49,7 +49,7 @@ public class FirebaseDBAdptr {
         usersDBRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Log.i(TAG,"Data change");
+                //Log.i(TAG,"Data change");
                 // TODO: I'm clearing the entire set of users and replacing them.  There's probably a better way.
                 users = new HashMap<>();
                 for(DataSnapshot userDBSnapShot : dataSnapshot.getChildren()) {

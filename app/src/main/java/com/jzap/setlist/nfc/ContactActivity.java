@@ -10,10 +10,13 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,7 +32,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -43,15 +50,42 @@ public class ContactActivity extends AppCompatActivity {
     private static final String TAG = "JAZ_NFC";
 
     private TextView mContactUserName;
-    private TextView mContactFirstName;
-    private TextView mContactLastName;
+
     private ImageView mPhotoImageView;
     private Button mRequestButton;
     private Button mAcceptRequestButton;
     private Button mRemoveContactButton;
     private TableLayout mTable;
-    private TextView mContactEmail;
-    private TextView mContactWebsite;
+
+    private EditText mContactEmail;
+    private EditText mContactWebsite;
+    private EditText mContactFirstName;
+    private EditText mContactLastName;
+    private EditText mContactFacebook;
+    private EditText mContactInstagram;
+    private EditText mContactTwitter;
+    private EditText mContactLinkedin;
+    private EditText mContactYoutube;
+    private EditText mContactSnapchat;
+    private EditText mContactPinterest;
+    private EditText mContactVimeo;
+    private EditText mContactFlickr;
+
+    private Switch mEmailPrivateSwitch;
+    private Switch mWebsitePrivateSwitch;
+    private Switch mFirstNamePrivateSwitch;
+    private Switch mLastNamePrivateSwitch;
+    private Switch mFacebookPrivateSwitch;
+    private Switch mInstagramPrivateSwitch;
+    private Switch mTwitterPrivateSwitch;
+    private Switch mLinkedinPrivateSwitch;
+    private Switch mYoutubePrivateSwitch;
+    private Switch mSnapchatPrivateSwitch;
+    private Switch mPinterestPrivateSwitch;
+    private Switch mVimeoPrivateSwitch;
+    private Switch mFlickrPrivateSwitch;
+
+    private Button mUpdateButton;
 
     private NfcAdapter mNfcAdapter;
 
@@ -72,6 +106,7 @@ public class ContactActivity extends AppCompatActivity {
 
         setUpNFC();
         setUpDisplay();
+        setUpUpdateButton();
         setUpRequestButton();
         setUpAcceptButton();
         setUpRemoveButton();
@@ -96,13 +131,80 @@ public class ContactActivity extends AppCompatActivity {
         mRequestButton.setVisibility(View.INVISIBLE);
         mAcceptRequestButton = (Button) findViewById(R.id.acceptRequestButton);
         mAcceptRequestButton.setVisibility(View.INVISIBLE);
-        mContactFirstName = (TextView) findViewById(R.id.userFirstName);
-        mContactLastName = (TextView) findViewById(R.id.userLastName);
-        mContactEmail = (TextView) findViewById(R.id.userEmailTextView);
-        mContactWebsite = (TextView) findViewById(R.id.userWebsiteTextView);
         mRemoveContactButton = (Button) findViewById(R.id.removeContatButton);
         mRemoveContactButton.setVisibility(View.VISIBLE);
         mPhotoImageView = (ImageView) findViewById(R.id.photoImageView);
+        mUpdateButton = findViewById(R.id.updateButton);
+
+        mContactFirstName = findViewById(R.id.userFirstName);
+        mContactLastName = findViewById(R.id.userLastName);
+        mContactEmail = findViewById(R.id.userEmailTextView);
+        mContactWebsite = findViewById(R.id.userWebsiteTextView);
+        mContactFacebook = findViewById(R.id.facebookTextView);
+        mContactInstagram = findViewById(R.id.instagramTextView);
+        mContactTwitter = findViewById(R.id.twitterTextView);
+        mContactLinkedin = findViewById(R.id.linkedinTextView);
+        mContactYoutube = findViewById(R.id.youtubeTextView);
+        mContactSnapchat = findViewById(R.id.snapchatTextView);
+        mContactPinterest = findViewById(R.id.pintrestTextView);
+        mContactVimeo = findViewById(R.id.vimeoTextView);
+        mContactFlickr = findViewById(R.id.flickrTextView);
+
+        mEmailPrivateSwitch = findViewById(R.id.privateEmail);
+        mWebsitePrivateSwitch = findViewById(R.id.privateWebsite);
+        mFirstNamePrivateSwitch = findViewById(R.id.privateFirstName);
+        mLastNamePrivateSwitch = findViewById(R.id.privateLastName);
+        mFacebookPrivateSwitch = findViewById(R.id.privateFacebook);
+        mInstagramPrivateSwitch = findViewById(R.id.privateInstagram);
+        mTwitterPrivateSwitch = findViewById(R.id.privateTwitter);
+        mLinkedinPrivateSwitch = findViewById(R.id.privateLinkedin);
+        mYoutubePrivateSwitch = findViewById(R.id.privateYoutube);
+        mSnapchatPrivateSwitch = findViewById(R.id.privateSnapchat);
+        mPinterestPrivateSwitch = findViewById(R.id.privatePintrest);
+        mVimeoPrivateSwitch = findViewById(R.id.privateVimeo);
+        mFlickrPrivateSwitch = findViewById(R.id.privateFlickr);
+    }
+
+    private void setUpUpdateButton() {
+        mUpdateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //mActiveUser.
+                //mActiveUser.postToDB();
+                // TODO: Optimize?
+                Map<String, Account> accounts = new HashMap<>();
+
+                Account facebookAccount = new Account("facebook", mContactFacebook.getText().toString(), mFacebookPrivateSwitch.isChecked());
+                accounts.put("facebook", facebookAccount);
+
+                Account instagramAccount = new Account("instagram", mContactInstagram.getText().toString(), mInstagramPrivateSwitch.isChecked());
+                accounts.put("instagram", instagramAccount);
+
+                Account twitterkAccount = new Account("twitter", mContactTwitter.getText().toString(), mTwitterPrivateSwitch.isChecked());
+                accounts.put("twitter", twitterkAccount);
+
+                Account youtubeAccount = new Account("youtube", mContactYoutube.getText().toString(), mYoutubePrivateSwitch.isChecked());
+                accounts.put("youtube", youtubeAccount);
+
+                Account linkedinkAccount = new Account("linkedin", mContactLinkedin.getText().toString(), mLinkedinPrivateSwitch.isChecked());
+                accounts.put("linkedin", linkedinkAccount);
+
+                Account snapchatAccount = new Account("snapchat", mContactSnapchat.getText().toString(), mSnapchatPrivateSwitch.isChecked());
+                accounts.put("snapchat", snapchatAccount);
+
+                Account pintrestAccount = new Account("pinterest", mContactPinterest.getText().toString(), mPinterestPrivateSwitch.isChecked());
+                accounts.put("pinterest", pintrestAccount);
+
+                Account vimeoAccount = new Account("vimeo", mContactVimeo.getText().toString(), mVimeoPrivateSwitch.isChecked());
+                accounts.put("vimeo", vimeoAccount);
+
+                Account flickrAccount = new Account("flickr", mContactFlickr.getText().toString(), mFlickrPrivateSwitch.isChecked());
+                accounts.put("flckr", flickrAccount);
+
+                mActiveUser.setAccounts(accounts);
+                mActiveUser.postToDB();
+            }
+        });
     }
 
     private void setUpRequestButton() {
@@ -201,7 +303,7 @@ public class ContactActivity extends AppCompatActivity {
             return;
         }
 
-        mContactUserName = (TextView) findViewById(R.id.userNameTextView);
+        mContactUserName = findViewById(R.id.userNameTextView);
         mContactUserName.setText(mThisContact.getUserName());
 
         if(mActiveUser.getContacts().contains(mThisContact.getCleanEmail())) {
@@ -235,7 +337,6 @@ public class ContactActivity extends AppCompatActivity {
 
             }
         });
-
     }
 
     private void displayPhoto() {
@@ -265,6 +366,8 @@ public class ContactActivity extends AppCompatActivity {
             mRemoveContactButton.setVisibility(View.INVISIBLE);
         } else {
             mRemoveContactButton.setVisibility(View.VISIBLE);
+            makeUneditable();
+            mUpdateButton.setVisibility(View.INVISIBLE);
         }
 
         mContactUserName.setTextColor(Color.BLUE);
@@ -273,6 +376,129 @@ public class ContactActivity extends AppCompatActivity {
         mContactLastName.setText(mThisContact.getLastName());
         mContactEmail.setText(mThisContact.getEmail());
         mContactWebsite.setText(mThisContact.getWebsite());
+
+        Map<String, Account> thisContactAccounts = mThisContact.getAccounts();
+
+        Account facebookAccount = thisContactAccounts.get("facebook");
+        if(facebookAccount != null) {
+            if(facebookAccount.isPrivate && !self) {
+                mContactFacebook.setText("*Private*");
+            } else {
+                mContactFacebook.setText(facebookAccount.data);
+            }
+            mFacebookPrivateSwitch.setChecked(facebookAccount.isPrivate);
+        }
+
+        Account instagramAccount = thisContactAccounts.get("instagram");
+        if(instagramAccount != null) {
+            if(instagramAccount.isPrivate && !self) {
+                mContactInstagram.setText("*Private*");
+            } else {
+                mContactInstagram.setText(instagramAccount.data);
+            }
+            mInstagramPrivateSwitch.setChecked(instagramAccount.isPrivate);
+        }
+
+        Account twitterAccount = thisContactAccounts.get("twitter");
+        if(twitterAccount != null) {
+            if(twitterAccount.isPrivate && !self) {
+                mContactTwitter.setText("*Private*");
+            } else {
+                mContactTwitter.setText(twitterAccount.data);
+            }
+            mTwitterPrivateSwitch.setChecked(twitterAccount.isPrivate);
+        }
+
+        Account linkedinAccount = thisContactAccounts.get("linkedin");
+        if(linkedinAccount != null) {
+            if(linkedinAccount.isPrivate && !self) {
+                mContactLinkedin.setText("*Private*");
+            } else {
+                mContactLinkedin.setText(linkedinAccount.data);
+            }
+            mLinkedinPrivateSwitch.setChecked(linkedinAccount.isPrivate);
+        }
+
+        Account youtubeAccount = thisContactAccounts.get("youtube");
+        if(youtubeAccount != null) {
+            if(youtubeAccount.isPrivate && !self) {
+                mContactYoutube.setText("*Private*");
+            } else {
+                mContactYoutube.setText(youtubeAccount.data);
+            }
+            mYoutubePrivateSwitch.setChecked(youtubeAccount.isPrivate);
+        }
+
+        Account snapchatAccount = thisContactAccounts.get("snapchat");
+        if(snapchatAccount != null) {
+            if(snapchatAccount.isPrivate && !self) {
+                mContactSnapchat.setText("*Private*");
+            } else {
+                mContactSnapchat.setText(snapchatAccount.data);
+            }
+            mSnapchatPrivateSwitch.setChecked(snapchatAccount.isPrivate);
+        }
+
+        Account pinterestAccount = thisContactAccounts.get("pinterest");
+        if(pinterestAccount != null) {
+            if(pinterestAccount.isPrivate && !self) {
+                mContactPinterest.setText("*Private*");
+            } else {
+                mContactPinterest.setText(pinterestAccount.data);
+            }
+            mPinterestPrivateSwitch.setChecked(pinterestAccount.isPrivate);
+        }
+
+        Account vimeoAccount = thisContactAccounts.get("vimeo");
+        if(vimeoAccount != null) {
+            if(vimeoAccount.isPrivate && !self) {
+                mContactVimeo.setText("*Private*");
+            } else {
+                mContactVimeo.setText(vimeoAccount.data);
+            }
+            mVimeoPrivateSwitch.setChecked(vimeoAccount.isPrivate);
+        }
+
+        Account flickrAccount = thisContactAccounts.get("flickr");
+        if(flickrAccount != null) {
+            if(flickrAccount.isPrivate && !self) {
+                mContactFlickr.setText("*Private*");
+            } else {
+                mContactFlickr.setText(flickrAccount.data);
+            }
+            mFlickrPrivateSwitch.setChecked(flickrAccount.isPrivate);
+        }
+    }
+
+    private void makeUneditable() {
+        Log.i(TAG, "Make uneditable");
+        mContactFirstName.setInputType(InputType.TYPE_NULL);
+        mContactLastName.setInputType(InputType.TYPE_NULL);
+        mContactEmail.setInputType(InputType.TYPE_NULL);
+        mContactWebsite.setInputType(InputType.TYPE_NULL);
+        mContactFacebook.setInputType(InputType.TYPE_NULL);
+        mContactInstagram.setInputType(InputType.TYPE_NULL);
+        mContactTwitter.setInputType(InputType.TYPE_NULL);
+        mContactLinkedin.setInputType(InputType.TYPE_NULL);
+        mContactYoutube.setInputType(InputType.TYPE_NULL);
+        mContactSnapchat.setInputType(InputType.TYPE_NULL);
+        mContactPinterest.setInputType(InputType.TYPE_NULL);
+        mContactVimeo.setInputType(InputType.TYPE_NULL);
+        mContactFlickr.setInputType(InputType.TYPE_NULL);
+
+        mEmailPrivateSwitch.setVisibility(View.GONE);
+        mLastNamePrivateSwitch.setVisibility(View.GONE);
+        mFirstNamePrivateSwitch.setVisibility(View.GONE);
+        mWebsitePrivateSwitch.setVisibility(View.GONE);
+        mFacebookPrivateSwitch.setVisibility(View.GONE);
+        mInstagramPrivateSwitch.setVisibility(View.GONE);
+        mTwitterPrivateSwitch.setVisibility(View.GONE);
+        mLinkedinPrivateSwitch.setVisibility(View.GONE);
+        mYoutubePrivateSwitch.setVisibility(View.GONE);
+        mSnapchatPrivateSwitch.setVisibility(View.GONE);
+        mPinterestPrivateSwitch.setVisibility(View.GONE);
+        mVimeoPrivateSwitch.setVisibility(View.GONE);
+        mFlickrPrivateSwitch.setVisibility(View.GONE);
     }
 
     private void displayStranger() {
@@ -312,6 +538,7 @@ public class ContactActivity extends AppCompatActivity {
             @Override
             public void call(int what, Object obj) {
                 super.call(what, obj);
+                // TODO: Might only want to do this once?
                 refresh(users);
             }
         });

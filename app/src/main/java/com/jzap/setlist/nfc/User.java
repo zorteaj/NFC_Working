@@ -7,8 +7,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by JZ_W541 on 3/29/2018.
@@ -24,6 +28,7 @@ public class User {
     private String email, firstName, lastName, userName, website, password, phone, token, photoURL, cleanEmail;
     private boolean privateAccount = false;
     private HashSet<String> contacts = new HashSet<>();
+    private Map<String, Account> accounts = new HashMap<>();
 
     public User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, boolean privateAccount, HashSet<String> contacts) {
         this.email = email;
@@ -70,8 +75,17 @@ public class User {
                 userDBSnapshot.child("photoURL").getValue(String.class),
                 userDBSnapshot.child("privateAccount").getValue(Boolean.class),
                 userDBSnapshot );
+        // TODO: Optimize?
+        Map<String, Account> accounts = new HashMap<>();
+        DataSnapshot snapshotAccounts = userDBSnapshot.child("accounts");
+        if(snapshotAccounts != null) {
+            for(DataSnapshot snapshotAccount : snapshotAccounts.getChildren()) {
+                Account account = new Account(snapshotAccount.getKey(), snapshotAccount.child("data").getValue(String.class), snapshotAccount.child("private").getValue(Boolean.class));
+                accounts.put(snapshotAccount.getKey(), account);
+            }
+        }
+        this.accounts = accounts;
     }
-
 
     public void postToDB() {
         DatabaseReference user = mUsersRef.child(cleanEmail);
@@ -85,6 +99,14 @@ public class User {
         user.child("token").setValue(token);
         user.child("photoURL").setValue(photoURL);
         user.child("privateAccount").setValue(privateAccount);
+
+        Iterator it = accounts.entrySet().iterator();
+        while(it.hasNext()) {
+            Account account = (Account) ((Map.Entry) it.next()).getValue();
+            user.child("accounts").child(account.name).child("private").setValue(account.isPrivate);
+            user.child("accounts").child(account.name).child("data").setValue(account.data);
+        }
+
         // TODO: Do I ever need to push the contacts list?
     }
 
@@ -119,6 +141,10 @@ public class User {
     public String getCleanEmail() { return cleanEmail; }
 
     public boolean getPrivateAccount() { return privateAccount; }
+
+    public Map<String, Account> getAccounts() { return accounts; }
+
+    public void setAccounts(Map<String, Account> accounts) { this.accounts = accounts; }
 
     public void setPrivateAccount(boolean privateAccount) {
         this.privateAccount = privateAccount;

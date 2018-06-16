@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<ScrollView android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent">
+
+
+
+
 
     <TextView
         android:id="@+id/userNameTextView"
@@ -27,9 +35,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Send Contact Request"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/contactDetailsTable"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TableLayout
@@ -51,8 +59,13 @@
                 android:layout_height="wrap_content"
                 android:text="First Name: " />
 
-            <TextView
+            <EditText
                 android:id="@+id/userFirstName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateFirstName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </TableRow>
@@ -67,8 +80,13 @@
                 android:layout_height="wrap_content"
                 android:text="Last Name: " />
 
-            <TextView
+            <EditText
                 android:id="@+id/userLastName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateLastName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </TableRow>
@@ -83,8 +101,13 @@
                 android:layout_height="wrap_content"
                 android:text="Email: " />
 
-            <TextView
+            <EditText
                 android:id="@+id/userEmailTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateEmail"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </TableRow>
@@ -99,8 +122,202 @@
                 android:layout_height="wrap_content"
                 android:text="Website: " />
 
-            <TextView
+            <EditText
                 android:id="@+id/userWebsiteTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateWebsite"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textViewFacebook"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Facebook: " />
+
+            <EditText
+                android:id="@+id/facebookTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateFacebook"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textViewInstagram"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Instagram: " />
+
+            <EditText
+                android:id="@+id/instagramTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateInstagram"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textViewTwitter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Twitter: " />
+
+            <EditText
+                android:id="@+id/twitterTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateTwitter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textViewLinkedin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Linkedi: " />
+
+            <EditText
+                android:id="@+id/linkedinTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateLinkedin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textViewYoutube"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Youtube: " />
+
+            <EditText
+                android:id="@+id/youtubeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateYoutube"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textViewSnapchat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Snapchat: " />
+
+            <EditText
+                android:id="@+id/snapchatTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateSnapchat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textViewPintrest"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pintrest: " />
+
+            <EditText
+                android:id="@+id/pintrestTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privatePintrest"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textViewVimeo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Vimeo: " />
+
+            <EditText
+                android:id="@+id/vimeoTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateVimeo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textViewFlickr"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Flickr: " />
+
+            <EditText
+                android:id="@+id/flickrTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Switch
+                android:id="@+id/privateFlickr"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </TableRow>
@@ -113,15 +330,24 @@
         android:layout_height="wrap_content"
         android:background="@android:color/holo_green_light"
         android:text="Accept Contact Request"
-        app:layout_constraintTop_toBottomOf="@id/requestContactButton"
+        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/requestContactButton" />
 
     <Button
         android:id="@+id/removeContatButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Remove Contact"
+        app:layout_constraintTop_toBottomOf="@+id/contactDetailsTable"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <Button
+        android:id="@+id/updateButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Update"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/contactDetailsTable" />
 </android.support.constraint.ConstraintLayout>
+</ScrollView>

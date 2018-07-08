@@ -19,7 +19,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.facebook.AccessToken;
+/*import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -31,7 +31,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Task;*/
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONObject;
@@ -79,31 +79,6 @@ public class MainActivity extends AppCompatActivity {
                 //testAccountLink();
             }
         });
-    }
-
-    public static String FACEBOOK_URL = "https://www.facebook.com/matt.reber.73";
-    public static String FACEBOOK_PAGE_ID = "";
-
-    //method to get the right URL to use in the intent
-    public String getFacebookPageURL(Context context) {
-        PackageManager packageManager = context.getPackageManager();
-        try {
-            int versionCode = packageManager.getPackageInfo("com.facebook.katana", 0).versionCode;
-            if (versionCode >= 3002850) { //newer versions of fb app
-                return "fb://facewebmodal/f?href=" + FACEBOOK_URL;
-            } else { //older versions of fb app
-                return "fb://page/" + FACEBOOK_PAGE_ID;
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-            return FACEBOOK_URL; //normal web url
-        }
-    }
-
-    private void testAccountLink() {
-        Intent facebookIntent = new Intent(Intent.ACTION_VIEW);
-        String facebookUrl = getFacebookPageURL(this);
-        facebookIntent.setData(Uri.parse(facebookUrl));
-        startActivity(facebookIntent);
     }
 
     private void startSettingsActivity() {

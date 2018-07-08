@@ -1,8 +1,12 @@
 package com.jzap.setlist.nfc;
 
+import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
@@ -379,32 +383,53 @@ public class ContactActivity extends AppCompatActivity {
 
         Map<String, Account> thisContactAccounts = mThisContact.getAccounts();
 
-        Account facebookAccount = thisContactAccounts.get("facebook");
+        final Account facebookAccount = thisContactAccounts.get("facebook");
         if(facebookAccount != null) {
             if(facebookAccount.isPrivate && !self) {
                 mContactFacebook.setText("*Private*");
             } else {
                 mContactFacebook.setText(facebookAccount.data);
+                mContactFacebook.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Log.i(TAG, "Facebook clicked");
+                        facebook(facebookAccount.data);
+                    }
+                });
             }
             mFacebookPrivateSwitch.setChecked(facebookAccount.isPrivate);
         }
 
-        Account instagramAccount = thisContactAccounts.get("instagram");
+        final Account instagramAccount = thisContactAccounts.get("instagram");
         if(instagramAccount != null) {
             if(instagramAccount.isPrivate && !self) {
                 mContactInstagram.setText("*Private*");
             } else {
                 mContactInstagram.setText(instagramAccount.data);
+                mContactInstagram.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Log.i(TAG, "Instagram clicked");
+                        instagram(instagramAccount.data);
+                    }
+                });
             }
             mInstagramPrivateSwitch.setChecked(instagramAccount.isPrivate);
         }
 
-        Account twitterAccount = thisContactAccounts.get("twitter");
+        final Account twitterAccount = thisContactAccounts.get("twitter");
         if(twitterAccount != null) {
             if(twitterAccount.isPrivate && !self) {
                 mContactTwitter.setText("*Private*");
             } else {
                 mContactTwitter.setText(twitterAccount.data);
+                mContactTwitter.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Log.i(TAG, "Twitte clicked");
+                        twitter(twitterAccount.data);
+                    }
+                });
             }
             mTwitterPrivateSwitch.setChecked(twitterAccount.isPrivate);
         }
@@ -470,6 +495,58 @@ public class ContactActivity extends AppCompatActivity {
         }
     }
 
+    public static String FACEBOOK_URL = "https://www.facebook.com/";
+
+    private void facebook(String facebookPageId) {
+        Intent facebookIntent = new Intent(Intent.ACTION_VIEW);
+        String facebookUrl = getFacebookPageURL(this, facebookPageId);
+        facebookIntent.setData(Uri.parse(facebookUrl));
+        startActivity(facebookIntent);
+    }
+
+    //method to get the right URL to use in the intent
+    public String getFacebookPageURL(Context context, String facebookPageId) {
+        String url = FACEBOOK_URL + facebookPageId;
+        PackageManager packageManager = context.getPackageManager();
+        try {
+            int versionCode = packageManager.getPackageInfo("com.facebook.katana", 0).versionCode;
+            if (versionCode >= 3002850) { //newer versions of fb app
+                return "fb://facewebmodal/f?href=" + url;
+            } else { //older versions of fb app
+                return "fb://page/" + facebookPageId;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            return url; //normal web url
+        }
+    }
+
+    private void instagram(String instagramId) {
+        String urlString = "http://instagram.com/_u/" + instagramId;
+        Uri uri = Uri.parse(urlString);
+        Intent likeIng = new Intent(Intent.ACTION_VIEW, uri);
+
+        likeIng.setPackage("com.instagram.android");
+
+        try {
+            startActivity(likeIng);
+        } catch (ActivityNotFoundException e) {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(urlString)));
+        }
+    }
+
+    private void twitter(String twitterId) {
+        //String urlString = "twitter://user?screen_name=" + twitterId;
+        String urlString = "https://twitter.com/" + twitterId;
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse(urlString));
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            startActivity(new Intent(Intent.ACTION_VIEW,
+                    Uri.parse(urlString)));
+        }
+    }
+
     private void makeUneditable() {
         Log.i(TAG, "Make uneditable");
         mContactFirstName.setInputType(InputType.TYPE_NULL);
@@ -499,6 +576,10 @@ public class ContactActivity extends AppCompatActivity {
         mPinterestPrivateSwitch.setVisibility(View.GONE);
         mVimeoPrivateSwitch.setVisibility(View.GONE);
         mFlickrPrivateSwitch.setVisibility(View.GONE);
+    }
+
+    private void setUpAccountLinks() {
+
     }
 
     private void displayStranger() {

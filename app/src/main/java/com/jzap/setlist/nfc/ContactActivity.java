@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -36,11 +37,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -102,11 +102,22 @@ public class ContactActivity extends AppCompatActivity {
     private User mActiveUser;
     private User mThisContact;
     private String mThisContactKey;
+    private String mRequestorKey;
+
+    private boolean mShareSettings = false; // Is this Activity started to select which accounts to share?
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact);
+
+        Intent intent = getIntent();
+
+        if(intent.getStringExtra("SHARE_SETTINGS") != null) {
+            Log.i(TAG, "Share settings");
+            mShareSettings = true;
+            mRequestorKey = User.cleanEmail(intent.getStringExtra("REQUESTOR"));
+        }
 
         setUpNFC();
         setUpDisplay();
@@ -114,8 +125,6 @@ public class ContactActivity extends AppCompatActivity {
         setUpRequestButton();
         setUpAcceptButton();
         setUpRemoveButton();
-
-        Intent intent = getIntent();
 
         if(intent.getAction() == "CONTACT_REQUEST") {
             mThisContactKey = User.cleanEmail(intent.getStringExtra("REQUESTOR"));
@@ -259,33 +268,94 @@ public class ContactActivity extends AppCompatActivity {
     }
 
     private void setUpAcceptButton() {
-        mAcceptRequestButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Add to contacts list
-                mUsersRef.child(mThisContactKey).child("contacts").child(mActiveUser.getCleanEmail()).setValue(mActiveUser.getCleanEmail());
 
-                DatabaseReference contactRequest = mUsersRef.child(mActiveUser.getCleanEmail()).child("contactRequests").child(mThisContactKey);
+        Log.i(TAG, "Share settings = " + mShareSettings);
 
-                // Delete the request (for notification)
-                Log.i(TAG, "attempting to delete this request: " + contactRequest.child("requestKey").getKey());
-                contactRequest.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        dataSnapshot.child("requestKey").getRef().removeValue();
-                        mNotificationsRef.child(dataSnapshot.child("requestKey").getValue(String.class)).removeValue();
-                    }
+        if(mShareSettings) {
 
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
+            Log.i(TAG, "Attempting to add the contact and delete the request");
 
-                    }
-                });
+            mAcceptRequestButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    // Add to contacts list
+                    long bitArray = getBoolArrayAsInt();
+                    Log.i(TAG, "bitArray = " + bitArray);
+                    mUsersRef.child(mRequestorKey).child("contacts").child(mActiveUser.getCleanEmail()).setValue(bitArray);
 
-                // Delete the contact request
-                contactRequest.removeValue();
-            }
-        });
+                    DatabaseReference contactRequest = mUsersRef.child(mActiveUser.getCleanEmail()).child("contactRequests").child(mRequestorKey);
+
+                    // Delete the request (for notification)
+                    contactRequest.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            Log.i(TAG, "Removing contact request with this request key: " + dataSnapshot.getValue());
+                            dataSnapshot.child("requestKey").getRef().removeValue();
+                            mNotificationsRef.child(dataSnapshot.child("requestKey").getValue(String.class)).removeValue();
+                            mAcceptRequestButton.setVisibility(View.GONE);
+                            mAcceptRequestButton.invalidate();
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
+                    // Delete the contact request
+                    contactRequest.removeValue();
+                }
+            });
+        } else {
+
+            Log.i(TAG, "Attempting to open activity to select share settings");
+
+            mAcceptRequestButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent contactIntent = new Intent(view.getContext(), ContactActivity.class);
+                    contactIntent.putExtra("CONTACT_KEY", mActiveUser.getCleanEmail());
+                    contactIntent.putExtra("SHARE_SETTINGS", ""); // The value is inconsequential - this is a boolean
+                    contactIntent.putExtra("REQUESTOR", mThisContactKey);
+                    view.getContext().startActivity(contactIntent);
+                }
+            });
+        }
+    }
+
+    private boolean[] getIntAsBoolArray(int input) {
+        Log.i(TAG, "int input = " + input);
+        boolean[] bits = new boolean[32];
+        for (int i = 31; i >= 0; i--) { // TODO: Get size of Long dynamically?
+            bits[31 - i] = (input & (1 << i)) != 0;
+        }
+        Log.i(TAG, Arrays.toString(bits));
+        return bits;
+    }
+
+
+    private long getBoolArrayAsInt() {
+
+        boolean[] boolArray = new boolean[32];
+        boolArray[31] = mFacebookPrivateSwitch.isChecked();
+        boolArray[30] = mInstagramPrivateSwitch.isChecked();
+        boolArray[29] = mTwitterPrivateSwitch.isChecked();
+        boolArray[28] = mLinkedinPrivateSwitch.isChecked();
+        boolArray[27] = mYoutubePrivateSwitch.isChecked();
+        boolArray[26] = mSnapchatPrivateSwitch.isChecked();
+        boolArray[25] = mPinterestPrivateSwitch.isChecked();
+        boolArray[24] = mVimeoPrivateSwitch.isChecked();
+        boolArray[23] = mFlickrPrivateSwitch.isChecked();
+
+        return boolArrayToLong(boolArray);
+    }
+
+    private long boolArrayToLong(boolean[] boolArray) {
+        long n = 0, l = boolArray.length;
+        for (int i = 0; i < l; ++i) {
+            n = (n << 1) + (boolArray[i] ? 1 : 0);
+        }
+        return n;
     }
 
     private void setUpRemoveButton() {
@@ -310,7 +380,7 @@ public class ContactActivity extends AppCompatActivity {
         mContactUserName = findViewById(R.id.userNameTextView);
         mContactUserName.setText(mThisContact.getUserName());
 
-        if(mActiveUser.getContacts().contains(mThisContact.getCleanEmail())) {
+        if(mActiveUser.getContacts() != null && mActiveUser.getContacts().containsKey(mThisContact.getCleanEmail())) {
             displayContact(false);
         } else if(mActiveUser.getCleanEmail().equals(mThisContactKey)) {
             displayContact(true);
@@ -324,23 +394,27 @@ public class ContactActivity extends AppCompatActivity {
 
     // TODO: Should this be part of the DB Adptr?
     private void setUpContactRequest() {
-        mUsersRef.child(mActiveUser.getCleanEmail()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // If this contact is in this user's contact requests
-                boolean isContactRequest = dataSnapshot.child("contactRequests").child(mThisContact.getCleanEmail()).exists();
-                if(isContactRequest) {
-                    mAcceptRequestButton.setVisibility(View.VISIBLE);
-                } else {
-                    mAcceptRequestButton.setVisibility(View.INVISIBLE);
+        if(!mShareSettings) {
+            mUsersRef.child(mActiveUser.getCleanEmail()).addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    // If this contact is in this user's contact requests
+                    boolean isContactRequest = dataSnapshot.child("contactRequests").child(mThisContact.getCleanEmail()).exists();
+                    if (isContactRequest) {
+                        mAcceptRequestButton.setVisibility(View.VISIBLE);
+                    } else {
+                        mAcceptRequestButton.setVisibility(View.INVISIBLE);
+                    }
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
 
-            }
-        });
+                }
+            });
+        } else {
+            mAcceptRequestButton.setVisibility(View.VISIBLE);
+        }
     }
 
     private void displayPhoto() {
@@ -370,7 +444,10 @@ public class ContactActivity extends AppCompatActivity {
             mRemoveContactButton.setVisibility(View.INVISIBLE);
         } else {
             mRemoveContactButton.setVisibility(View.VISIBLE);
-            makeUneditable();
+            if(!mShareSettings) {
+                makeUneditable();
+                mAcceptRequestButton.setVisibility(View.GONE);
+            }
             mUpdateButton.setVisibility(View.INVISIBLE);
         }
 
@@ -382,10 +459,15 @@ public class ContactActivity extends AppCompatActivity {
         mContactWebsite.setText(mThisContact.getWebsite());
 
         Map<String, Account> thisContactAccounts = mThisContact.getAccounts();
+        Integer share = mActiveUser.getContacts().get(mThisContact.getCleanEmail());
+
+
+        boolean[] boolArray = null;
+        if(!self) boolArray = getIntAsBoolArray(share);
 
         final Account facebookAccount = thisContactAccounts.get("facebook");
         if(facebookAccount != null) {
-            if(facebookAccount.isPrivate && !self) {
+            if(!self && boolArray[31]) {
                 mContactFacebook.setText("*Private*");
             } else {
                 mContactFacebook.setText(facebookAccount.data);
@@ -402,7 +484,7 @@ public class ContactActivity extends AppCompatActivity {
 
         final Account instagramAccount = thisContactAccounts.get("instagram");
         if(instagramAccount != null) {
-            if(instagramAccount.isPrivate && !self) {
+            if(!self && boolArray[30]) {
                 mContactInstagram.setText("*Private*");
             } else {
                 mContactInstagram.setText(instagramAccount.data);
@@ -419,14 +501,14 @@ public class ContactActivity extends AppCompatActivity {
 
         final Account twitterAccount = thisContactAccounts.get("twitter");
         if(twitterAccount != null) {
-            if(twitterAccount.isPrivate && !self) {
+            if(!self && boolArray[29]) {
                 mContactTwitter.setText("*Private*");
             } else {
                 mContactTwitter.setText(twitterAccount.data);
                 mContactTwitter.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Log.i(TAG, "Twitte clicked");
+                        Log.i(TAG, "Twitter clicked");
                         twitter(twitterAccount.data);
                     }
                 });
@@ -434,62 +516,98 @@ public class ContactActivity extends AppCompatActivity {
             mTwitterPrivateSwitch.setChecked(twitterAccount.isPrivate);
         }
 
-        Account linkedinAccount = thisContactAccounts.get("linkedin");
+        final Account linkedinAccount = thisContactAccounts.get("linkedin");
         if(linkedinAccount != null) {
-            if(linkedinAccount.isPrivate && !self) {
+            if(!self && boolArray[28]) {
                 mContactLinkedin.setText("*Private*");
             } else {
                 mContactLinkedin.setText(linkedinAccount.data);
+                mContactLinkedin.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        linkedin(linkedinAccount.data);
+                    }
+                });
             }
             mLinkedinPrivateSwitch.setChecked(linkedinAccount.isPrivate);
         }
 
-        Account youtubeAccount = thisContactAccounts.get("youtube");
+        final Account youtubeAccount = thisContactAccounts.get("youtube");
         if(youtubeAccount != null) {
-            if(youtubeAccount.isPrivate && !self) {
+            if(!self && boolArray[27]) {
                 mContactYoutube.setText("*Private*");
             } else {
                 mContactYoutube.setText(youtubeAccount.data);
+                mContactYoutube.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        youtube(youtubeAccount.data);
+                    }
+                });
             }
             mYoutubePrivateSwitch.setChecked(youtubeAccount.isPrivate);
         }
 
-        Account snapchatAccount = thisContactAccounts.get("snapchat");
+        final Account snapchatAccount = thisContactAccounts.get("snapchat");
         if(snapchatAccount != null) {
-            if(snapchatAccount.isPrivate && !self) {
+            if(!self && boolArray[26]) {
                 mContactSnapchat.setText("*Private*");
             } else {
                 mContactSnapchat.setText(snapchatAccount.data);
+                mContactSnapchat.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        snapchat(snapchatAccount.data);
+                    }
+                });
             }
             mSnapchatPrivateSwitch.setChecked(snapchatAccount.isPrivate);
         }
 
-        Account pinterestAccount = thisContactAccounts.get("pinterest");
+        final Account pinterestAccount = thisContactAccounts.get("pinterest");
         if(pinterestAccount != null) {
-            if(pinterestAccount.isPrivate && !self) {
+            if(!self && boolArray[25]) {
                 mContactPinterest.setText("*Private*");
             } else {
                 mContactPinterest.setText(pinterestAccount.data);
+                mContactPinterest.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        pinterest(pinterestAccount.data);
+                    }
+                });
             }
             mPinterestPrivateSwitch.setChecked(pinterestAccount.isPrivate);
         }
 
-        Account vimeoAccount = thisContactAccounts.get("vimeo");
+        final Account vimeoAccount = thisContactAccounts.get("vimeo");
         if(vimeoAccount != null) {
-            if(vimeoAccount.isPrivate && !self) {
+            if(!self && boolArray[24]) {
                 mContactVimeo.setText("*Private*");
             } else {
                 mContactVimeo.setText(vimeoAccount.data);
+                mContactVimeo.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        vimeo(vimeoAccount.data);
+                    }
+                });
             }
             mVimeoPrivateSwitch.setChecked(vimeoAccount.isPrivate);
         }
 
-        Account flickrAccount = thisContactAccounts.get("flickr");
+        final Account flickrAccount = thisContactAccounts.get("flickr");
         if(flickrAccount != null) {
-            if(flickrAccount.isPrivate && !self) {
+            if(!self && boolArray[23]) {
                 mContactFlickr.setText("*Private*");
             } else {
                 mContactFlickr.setText(flickrAccount.data);
+                mContactFlickr.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        flickr(flickrAccount.data);
+                    }
+                });
             }
             mFlickrPrivateSwitch.setChecked(flickrAccount.isPrivate);
         }
@@ -530,7 +648,7 @@ public class ContactActivity extends AppCompatActivity {
         try {
             startActivity(likeIng);
         } catch (ActivityNotFoundException e) {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(urlString)));
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://instagram.com/" + instagramId)));
         }
     }
 
@@ -538,13 +656,69 @@ public class ContactActivity extends AppCompatActivity {
         //String urlString = "twitter://user?screen_name=" + twitterId;
         String urlString = "https://twitter.com/" + twitterId;
         try {
-            Intent intent = new Intent(Intent.ACTION_VIEW,
-                    Uri.parse(urlString));
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(urlString));
             startActivity(intent);
         } catch (ActivityNotFoundException e) {
-            startActivity(new Intent(Intent.ACTION_VIEW,
-                    Uri.parse(urlString)));
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://twitter.com/#!/" + twitterId)));
         }
+    }
+
+    private void linkedin(String linkedInId) {
+        String urlString = "linkedin://" + linkedInId;
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(urlString));
+        final PackageManager packageManager = getPackageManager();
+        final List<ResolveInfo> list = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        if (list.isEmpty()) {
+            intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.linkedin.com/profile/view?id=" + linkedInId));
+        }
+        startActivity(intent);
+    }
+
+    private void pinterest(String pinterestId) {
+        String urlString = "pinterest://www.pinterest.com/" + pinterestId;
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(urlString)));
+        } catch (ActivityNotFoundException e) {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.pinterest.com/" + pinterestId)));
+        }
+    }
+
+    private void youtube(String channelName) {
+        String url = "http://www.youtube.com/user/" + channelName;
+        Intent intent = null;
+        try {
+            intent = new Intent(Intent.ACTION_VIEW);
+            intent.setPackage("com.google.android.youtube");
+            intent.setData(Uri.parse(url));
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(url));
+            startActivity(intent);
+        }
+    }
+
+    private void snapchat(String userName) {
+        Intent nativeAppIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://snapchat.com/add/" + userName));
+        startActivity(nativeAppIntent);
+    }
+
+    private void vimeo(String channelName) {
+        try{
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://vimeo.com/" + channelName));
+            browserIntent.setPackage("com.vimeo.android.videoapp");
+            startActivity(browserIntent);
+        }
+        catch(ActivityNotFoundException e){
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://vimeo.com/" + channelName));
+            startActivity(browserIntent);
+        }
+    }
+
+    private void flickr(String userName) {
+        String urlString = "https://www.flickr.com/photos/" + userName;
+        Intent nativeAppIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(urlString));
+        startActivity(nativeAppIntent);
     }
 
     private void makeUneditable() {
@@ -563,34 +737,191 @@ public class ContactActivity extends AppCompatActivity {
         mContactVimeo.setInputType(InputType.TYPE_NULL);
         mContactFlickr.setInputType(InputType.TYPE_NULL);
 
-        mEmailPrivateSwitch.setVisibility(View.GONE);
-        mLastNamePrivateSwitch.setVisibility(View.GONE);
-        mFirstNamePrivateSwitch.setVisibility(View.GONE);
-        mWebsitePrivateSwitch.setVisibility(View.GONE);
-        mFacebookPrivateSwitch.setVisibility(View.GONE);
-        mInstagramPrivateSwitch.setVisibility(View.GONE);
-        mTwitterPrivateSwitch.setVisibility(View.GONE);
-        mLinkedinPrivateSwitch.setVisibility(View.GONE);
-        mYoutubePrivateSwitch.setVisibility(View.GONE);
-        mSnapchatPrivateSwitch.setVisibility(View.GONE);
-        mPinterestPrivateSwitch.setVisibility(View.GONE);
-        mVimeoPrivateSwitch.setVisibility(View.GONE);
-        mFlickrPrivateSwitch.setVisibility(View.GONE);
+        setSwitchVisibility(View.GONE);
     }
 
-    private void setUpAccountLinks() {
-
+    private void setSwitchVisibility(int visibility) {
+        mEmailPrivateSwitch.setVisibility(visibility);
+        mLastNamePrivateSwitch.setVisibility(visibility);
+        mFirstNamePrivateSwitch.setVisibility(visibility);
+        mWebsitePrivateSwitch.setVisibility(visibility);
+        mFacebookPrivateSwitch.setVisibility(visibility);
+        mInstagramPrivateSwitch.setVisibility(visibility);
+        mTwitterPrivateSwitch.setVisibility(visibility);
+        mLinkedinPrivateSwitch.setVisibility(visibility);
+        mYoutubePrivateSwitch.setVisibility(visibility);
+        mSnapchatPrivateSwitch.setVisibility(visibility);
+        mPinterestPrivateSwitch.setVisibility(visibility);
+        mVimeoPrivateSwitch.setVisibility(visibility);
+        mFlickrPrivateSwitch.setVisibility(visibility);
     }
 
     private void displayStranger() {
         mTable.setVisibility(View.INVISIBLE);
         mRequestButton.setVisibility(View.VISIBLE);
         mRemoveContactButton.setVisibility(View.INVISIBLE);
+
+        displayPhoto();
+
+        mTable.setVisibility(View.VISIBLE);
+
+        makeUneditable();
+        mAcceptRequestButton.setVisibility(View.GONE);
+
+        mUpdateButton.setVisibility(View.INVISIBLE);
+
+        mContactUserName.setTextColor(Color.BLUE);
+
+        mContactFirstName.setText(mThisContact.getFirstName());
+        mContactLastName.setText(mThisContact.getLastName());
+        mContactEmail.setText(mThisContact.getEmail());
+        mContactWebsite.setText(mThisContact.getWebsite());
+
+        Map<String, Account> thisContactAccounts = mThisContact.getAccounts();
+
+        final Account facebookAccount = thisContactAccounts.get("facebook");
+        if(facebookAccount != null) {
+            if(facebookAccount.isPrivate) {
+                mContactFacebook.setText("*Private*");
+            } else {
+                mContactFacebook.setText(facebookAccount.data);
+                mContactFacebook.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Log.i(TAG, "Facebook clicked");
+                        facebook(facebookAccount.data);
+                    }
+                });
+            }
+        }
+
+        final Account instagramAccount = thisContactAccounts.get("instagram");
+        if(instagramAccount != null) {
+            if(instagramAccount.isPrivate) {
+                mContactInstagram.setText("*Private*");
+            } else {
+                mContactInstagram.setText(instagramAccount.data);
+                mContactInstagram.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Log.i(TAG, "Instagram clicked");
+                        instagram(instagramAccount.data);
+                    }
+                });
+            }
+        }
+
+        final Account twitterAccount = thisContactAccounts.get("twitter");
+        if(twitterAccount != null) {
+            if(twitterAccount.isPrivate) {
+                mContactTwitter.setText("*Private*");
+            } else {
+                mContactTwitter.setText(twitterAccount.data);
+                mContactTwitter.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Log.i(TAG, "Twitter clicked");
+                        twitter(twitterAccount.data);
+                    }
+                });
+            }
+        }
+
+        final Account linkedinAccount = thisContactAccounts.get("linkedin");
+        if(linkedinAccount != null) {
+            if(linkedinAccount.isPrivate) {
+                mContactLinkedin.setText("*Private*");
+            } else {
+                mContactLinkedin.setText(linkedinAccount.data);
+                mContactLinkedin.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        linkedin(linkedinAccount.data);
+                    }
+                });
+            }
+        }
+
+        final Account youtubeAccount = thisContactAccounts.get("youtube");
+        if(youtubeAccount != null) {
+            if(youtubeAccount.isPrivate) {
+                mContactYoutube.setText("*Private*");
+            } else {
+                mContactYoutube.setText(youtubeAccount.data);
+                mContactYoutube.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        youtube(youtubeAccount.data);
+                    }
+                });
+            }
+        }
+
+        final Account snapchatAccount = thisContactAccounts.get("snapchat");
+        if(snapchatAccount != null) {
+            if(snapchatAccount.isPrivate) {
+                mContactSnapchat.setText("*Private*");
+            } else {
+                mContactSnapchat.setText(snapchatAccount.data);
+                mContactSnapchat.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        snapchat(snapchatAccount.data);
+                    }
+                });
+            }
+        }
+
+        final Account pinterestAccount = thisContactAccounts.get("pinterest");
+        if(pinterestAccount != null) {
+            if(pinterestAccount.isPrivate) {
+                mContactPinterest.setText("*Private*");
+            } else {
+                mContactPinterest.setText(pinterestAccount.data);
+                mContactPinterest.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        pinterest(pinterestAccount.data);
+                    }
+                });
+            }
+        }
+
+        final Account vimeoAccount = thisContactAccounts.get("vimeo");
+        if(vimeoAccount != null) {
+            if(vimeoAccount.isPrivate) {
+                mContactVimeo.setText("*Private*");
+            } else {
+                mContactVimeo.setText(vimeoAccount.data);
+                mContactVimeo.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        vimeo(vimeoAccount.data);
+                    }
+                });
+            }
+        }
+
+        final Account flickrAccount = thisContactAccounts.get("flickr");
+        if(flickrAccount != null) {
+            if(flickrAccount.isPrivate) {
+                mContactFlickr.setText("*Private*");
+            } else {
+                mContactFlickr.setText(flickrAccount.data);
+                mContactFlickr.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        flickr(flickrAccount.data);
+                    }
+                });
+            }
+        }
     }
 
     // TODO: This is duplicated
     private void setUpThisUser(HashMap<String, User> users) {
         mActiveUser = ActiveUser.getActiveUser(this, users);
+        Log.i(TAG, "Active user = " + mActiveUser.getCleanEmail());
     }
 
     private void setUpThisContact(HashMap<String, User> users) {

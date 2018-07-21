@@ -27,10 +27,11 @@ public class User {
 
     private String email, firstName, lastName, userName, website, password, phone, token, photoURL, cleanEmail;
     private boolean privateAccount = false;
-    private HashSet<String> contacts = new HashSet<>();
+    //private HashSet<String> contacts = new HashSet<>();
+    private Map<String, Integer> contacts = new HashMap<>();
     private Map<String, Account> accounts = new HashMap<>();
 
-    public User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, boolean privateAccount, HashSet<String> contacts) {
+    public User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, boolean privateAccount, Map<String, Integer> contacts) {
         this.email = email;
         this.website = website;
         this.firstName = firstName;
@@ -48,7 +49,7 @@ public class User {
     private User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, boolean privateAccount, DataSnapshot userDBSnapshot) {
         DataSnapshot contactsDB = userDBSnapshot.child("contacts");
         for (DataSnapshot contact : contactsDB.getChildren()) {
-            contacts.add(contact.getValue(String.class));
+            contacts.put(contact.getKey(), contact.getValue(Integer.class));
         }
         this.email = email;
         this.website = website;
@@ -132,7 +133,7 @@ public class User {
 
     public String getPhone() { return phone; }
 
-    public HashSet<String> getContacts() { return contacts; }
+    public Map<String, Integer> getContacts() { return contacts; }
 
     public String getToken() { return token; }
 
@@ -150,8 +151,8 @@ public class User {
         this.privateAccount = privateAccount;
     }
 
-    public void addContact(String email) {
+ /*   public void addContact(String email) {
         contacts.add(email);
-    }
+    }*/
 
 }

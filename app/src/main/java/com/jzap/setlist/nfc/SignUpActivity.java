@@ -46,7 +46,9 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -185,7 +187,7 @@ public class SignUpActivity extends AppCompatActivity {
 
                 // TODO: Validate
                 // TODO: I'm waiting to upload the user to the db until the profile picture uploads to storage, which might not be the best idea, and is a bit confusing
-                HashSet<String> contacts = new HashSet<>(); // TODO: Put contacts in here?
+                Map<String, Integer> contacts = new HashMap<>(); // TODO: Put contacts in here?
                 String token = ActiveUser.getToken(context);
                 User user = new User(mEmailEditText.getText().toString(),
                         mFirstNameEditText.getText().toString(),

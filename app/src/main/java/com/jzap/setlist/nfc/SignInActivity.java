@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by JZ_W541 on 4/3/2018.
@@ -224,7 +225,7 @@ public class SignInActivity extends AppCompatActivity {
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            HashSet<String> contacts = new HashSet<>(); // TODO: Fill in any contacts?
+            Map<String, Integer> contacts = new HashMap<>(); // TODO: Fill in any contacts?
             // New user
             String token = ActiveUser.getToken(this);
 

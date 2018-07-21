@@ -57,7 +57,7 @@ public class UsersRecyclerViewAdptr extends RecyclerView.Adapter<UsersRecyclerVi
     @Override
     public void onBindViewHolder(UsersRecyclerViewAdptr.ViewHolder holder, final int position) {
         holder.userName.setText(mUsersList.get(position).getUserName());
-        if(mActiveUser.getContacts().contains(mUsersList.get(position).getCleanEmail())) {
+        if(mActiveUser.getContacts() != null && mActiveUser.getContacts().containsKey(mUsersList.get(position).getCleanEmail())) {
             holder.friendFlag.setText("Friend");
             holder.friendFlag.setTextColor(Color.BLUE);
         } else if(mActiveUser.getCleanEmail().equals(mUsersList.get(position).getCleanEmail())) {

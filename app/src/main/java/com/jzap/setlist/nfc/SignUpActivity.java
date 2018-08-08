@@ -199,7 +199,8 @@ public class SignUpActivity extends AppCompatActivity {
                         token,
                         pictureUrlS,
                         false,
-                        contacts
+                        contacts,
+                        null // TODO: Tags
                 );
                 user.postToDB();
                 logIn(User.cleanEmail(mEmailEditText.getText().toString()));

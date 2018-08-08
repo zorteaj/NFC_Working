@@ -37,8 +37,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -50,6 +52,7 @@ public class ContactActivity extends AppCompatActivity {
 
     boolean mDBReady = false;
     boolean mRequestOutstanding = false;
+    boolean mActiveTagQueryOutstanding = false;
 
     private static final String TAG = "JAZ_NFC";
 
@@ -104,6 +107,8 @@ public class ContactActivity extends AppCompatActivity {
     private String mThisContactKey;
     private String mRequestorKey;
 
+    private Intent mTagIntent;
+
     private boolean mShareSettings = false; // Is this Activity started to select which accounts to share?
 
     @Override
@@ -129,6 +134,7 @@ public class ContactActivity extends AppCompatActivity {
         if(intent.getAction() == "CONTACT_REQUEST") {
             mThisContactKey = User.cleanEmail(intent.getStringExtra("REQUESTOR"));
         } else if (intent.getAction() == NfcAdapter.ACTION_NDEF_DISCOVERED) {
+            mTagIntent = intent;
             processTag(intent);
         } else {
             mThisContactKey = intent.getStringExtra("CONTACT_KEY");
@@ -925,7 +931,7 @@ public class ContactActivity extends AppCompatActivity {
     }
 
     private void setUpThisContact(HashMap<String, User> users) {
-        //Log.i(TAG, "Setting up contact");
+        Log.i(TAG, "Setting up contact: " + mThisContactKey);
         mThisContact = users.get(mThisContactKey);
     }
 
@@ -933,8 +939,16 @@ public class ContactActivity extends AppCompatActivity {
         mUsers = users;
         setUpThisUser(users);
         setUpThisContact(users);
-        display();
+
         mDBReady = true;
+
+        if (mActiveTagQueryOutstanding) {
+            processTag(mTagIntent);
+            mActiveTagQueryOutstanding = false;
+        } else {
+            display();
+        }
+
         if (mRequestOutstanding) {
             makeRequest();
             mRequestOutstanding = false;
@@ -972,19 +986,56 @@ public class ContactActivity extends AppCompatActivity {
         }
     }
 
+    private boolean tagIsActive(String tagId) {
+        User user = mUsers.get(User.cleanEmail(getPayload(mTagIntent)));
+
+        Map<String, Boolean> tags = user.getTags();
+        Iterator it = tags.entrySet().iterator();
+        Log.i(TAG, "User tags...");
+        while(it.hasNext()) {
+            Map.Entry entry = (Map.Entry) it.next();
+            Log.i(TAG, (String) entry.getKey());
+            Log.i(TAG, String.valueOf(((Boolean) entry.getValue())));
+        }
+
+        //Compare this tagId to the ones in user.getTags()
+
+        return true;
+    }
+
     // TODO: Only send request if you're already not friends
     private void processTag(Intent intent) {
+        byte[] tagId = intent.getByteArrayExtra(NfcAdapter.EXTRA_ID);
+        String tagIdAsString = tagIdAsString(tagId);
+
+        //List<String> set = new ArrayList<>();
+        //set.add("test1");
+        //set.add("test2");
+        //mUsersRef.child("test").setValue(set);
+
+        if(mDBReady) {
+            if(!tagIsActive(tagIdAsString)) {
+                Log.i(TAG, "Tag is inactive");
+            }
+        } else {
+            mActiveTagQueryOutstanding = true;
+            return;
+        }
+
         Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
         if(rawMsgs != null) {
             NdefMessage[] msgs = new NdefMessage[rawMsgs.length];
             for(int i = 0; i < rawMsgs.length; i++) {
                 msgs[i] = (NdefMessage) rawMsgs[i];
                 NdefRecord[] records = msgs[i].getRecords();
+                // TODO: Stop at first and thiis is a duplicated of getPayload below
                 for(int j = 0; j < records.length; j++) {
                     String payload = new String(records[j].getPayload());
                     Log.i(TAG, payload);
                     mThisContactKey = User.cleanEmail(payload);
                     if(mDBReady) {
+                        // TODO: THis is a gigantic ugly hack
+                        setUpThisContact(mUsers);
                         makeRequest();
                     } else {
                         mRequestOutstanding = true;
@@ -994,6 +1045,38 @@ public class ContactActivity extends AppCompatActivity {
         } else {
             Log.i(TAG, "Problem reading tag");
         }
+    }
+
+    private String getPayload(Intent intent) {
+        Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+        if(rawMsgs != null) {
+            NdefMessage[] msgs = new NdefMessage[rawMsgs.length];
+            for(int i = 0; i < rawMsgs.length; i++) {
+                msgs[i] = (NdefMessage) rawMsgs[i];
+                NdefRecord[] records = msgs[i].getRecords();
+                // TODO: Stop at first
+                for(int j = 0; j < records.length; j++) {
+                    String payload = new String(records[j].getPayload());
+                    return payload;
+                }
+            }
+        } else {
+            Log.i(TAG, "Problem reading tag");
+        }
+        return "";
+    }
+
+    private String tagIdAsString(byte[] tagId) {
+        String hexdump = new String();
+        for(int i = 0; i < tagId.length; i++) {
+            String x = Integer.toHexString(((int) tagId[i] & 0xff));
+            if (x.length() == 1) {
+                x = '0' + x;
+            }
+            hexdump += x + ' ';
+        }
+        Log.i(TAG, hexdump);
+        return hexdump;
     }
 
 }

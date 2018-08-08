@@ -240,7 +240,8 @@ public class SignInActivity extends AppCompatActivity {
                         token,
                         account.getPhotoUrl().toString(),
                         false,
-                        contacts
+                        contacts,
+                        null // TODO: Tags
                 );
                 user.postToDB();
             }

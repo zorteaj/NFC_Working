@@ -26,12 +26,13 @@ public class User {
     private DatabaseReference mUsersRef = mRootRef.child("users");
 
     private String email, firstName, lastName, userName, website, password, phone, token, photoURL, cleanEmail;
-    private boolean privateAccount = false;
+    private Boolean privateAccount = false;
     //private HashSet<String> contacts = new HashSet<>();
     private Map<String, Integer> contacts = new HashMap<>();
     private Map<String, Account> accounts = new HashMap<>();
+    private Map<String, Boolean> tags = new HashMap<>();
 
-    public User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, boolean privateAccount, Map<String, Integer> contacts) {
+    public User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, boolean privateAccount, Map<String, Integer> contacts, Map<String, Boolean> tags) {
         this.email = email;
         this.website = website;
         this.firstName = firstName;
@@ -44,12 +45,17 @@ public class User {
         this.contacts = contacts;
         this.cleanEmail = cleanEmail(email);
         this.privateAccount = privateAccount;
+        this.tags = tags;
     }
 
     private User(String email, String firstName, String lastName, String userName, String website, String password, String phone, String token, String photoURL, boolean privateAccount, DataSnapshot userDBSnapshot) {
         DataSnapshot contactsDB = userDBSnapshot.child("contacts");
         for (DataSnapshot contact : contactsDB.getChildren()) {
             contacts.put(contact.getKey(), contact.getValue(Integer.class));
+        }
+        DataSnapshot tagsDB = userDBSnapshot.child("tags");
+        for (DataSnapshot tag : tagsDB.getChildren()) {
+            tags.put(tag.getKey(), tag.getValue(Boolean.class));
         }
         this.email = email;
         this.website = website;
@@ -76,8 +82,9 @@ public class User {
                 userDBSnapshot.child("photoURL").getValue(String.class),
                 userDBSnapshot.child("privateAccount").getValue(Boolean.class),
                 userDBSnapshot );
+
         // TODO: Optimize?
-        Map<String, Account> accounts = new HashMap<>();
+        Map<String, Account> accounts = new HashMap<>(); // TODO: Not necessary - set member var directly
         DataSnapshot snapshotAccounts = userDBSnapshot.child("accounts");
         if(snapshotAccounts != null) {
             for(DataSnapshot snapshotAccount : snapshotAccounts.getChildren()) {
@@ -86,6 +93,15 @@ public class User {
             }
         }
         this.accounts = accounts;
+
+        Map<String, Boolean> tags = new HashMap<>(); // TODO: Not necessary - set member var directly
+        DataSnapshot snapshotTags = userDBSnapshot.child("tags");
+        if(snapshotTags != null) {
+            for(DataSnapshot snapshotTag : snapshotTags.getChildren()) {
+                tags.put(snapshotTag.getKey(), snapshotTag.getValue(Boolean.class));
+            }
+        }
+        this.tags = tags;
     }
 
     public void postToDB() {
@@ -106,6 +122,12 @@ public class User {
             Account account = (Account) ((Map.Entry) it.next()).getValue();
             user.child("accounts").child(account.name).child("private").setValue(account.isPrivate);
             user.child("accounts").child(account.name).child("data").setValue(account.data);
+        }
+
+        it = tags.entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry entry =((Map.Entry) it.next());
+            user.child("tags").child((String)entry.getKey()).setValue((Boolean)entry.getValue());
         }
 
         // TODO: Do I ever need to push the contacts list?
@@ -146,6 +168,8 @@ public class User {
     public Map<String, Account> getAccounts() { return accounts; }
 
     public void setAccounts(Map<String, Account> accounts) { this.accounts = accounts; }
+
+    public Map<String, Boolean> getTags() { return tags; }
 
     public void setPrivateAccount(boolean privateAccount) {
         this.privateAccount = privateAccount;

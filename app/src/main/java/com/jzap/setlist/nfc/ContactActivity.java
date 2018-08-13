@@ -932,7 +932,9 @@ public class ContactActivity extends AppCompatActivity {
 
     private void setUpThisContact(HashMap<String, User> users) {
         Log.i(TAG, "Setting up contact: " + mThisContactKey);
-        mThisContact = users.get(mThisContactKey);
+        if(mThisContactKey != null) {
+            mThisContact = users.get(mThisContactKey);
+        }
     }
 
     private void refresh(HashMap<String, User> users) {
@@ -987,20 +989,32 @@ public class ContactActivity extends AppCompatActivity {
     }
 
     private boolean tagIsActive(String tagId) {
-        User user = mUsers.get(User.cleanEmail(getPayload(mTagIntent)));
+        String cleanEmail = User.cleanEmail(getPayload(mTagIntent));
+        Log.i(TAG,"Clean email = " + cleanEmail);
+
+        User user = mUsers.get(cleanEmail);
+
+        if(user == null) {
+            Log.i(TAG, "Cannot find user: " + cleanEmail);
+            return false;
+        }
 
         Map<String, Boolean> tags = user.getTags();
         Iterator it = tags.entrySet().iterator();
         Log.i(TAG, "User tags...");
         while(it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
+
             Log.i(TAG, (String) entry.getKey());
             Log.i(TAG, String.valueOf(((Boolean) entry.getValue())));
+
+            // If this entry is for this tag, and the tag is activated
+            if(entry.getKey().equals(tagId) && (Boolean) entry.getValue()) {
+                return true;
+            }
         }
-
-        //Compare this tagId to the ones in user.getTags()
-
-        return true;
+        Log.i(TAG, "No matching tag");
+        return false;
     }
 
     // TODO: Only send request if you're already not friends
@@ -1016,6 +1030,8 @@ public class ContactActivity extends AppCompatActivity {
         if(mDBReady) {
             if(!tagIsActive(tagIdAsString)) {
                 Log.i(TAG, "Tag is inactive");
+                Toast.makeText(this, "Tag is inactive", Toast.LENGTH_LONG).show();
+                return;
             }
         } else {
             mActiveTagQueryOutstanding = true;
@@ -1073,7 +1089,10 @@ public class ContactActivity extends AppCompatActivity {
             if (x.length() == 1) {
                 x = '0' + x;
             }
-            hexdump += x + ' ';
+            hexdump += x;
+            if(i != tagId.length - 1) {
+                hexdump += ' ';
+            }
         }
         Log.i(TAG, hexdump);
         return hexdump;
